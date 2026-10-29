@@ -1,0 +1,603 @@
+<!doctype html>
+<html lang="mn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>ЗөвЭмч цаг захиалга</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Unbounded:wght@500;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: top bar with mode switch; a device stage (kiosk screen or phone) beside a presenter notes column. */
+:root{
+  --bg:#eef2f4; --surface:#ffffff; --surface-2:#f6f8fa; --ink:#14212b; --muted:#5a6b78; --line:#d5dee5;
+  --accent:#1f5f8b; --accent-ink:#ffffff; --accent-soft:#e1edf5;
+  --gold:#a8700a; --gold-soft:#fbf1dc;
+  --danger:#b3261e; --danger-soft:#fbe5e3; --ok:#2e7d4f; --ok-soft:#e2f2e8;
+  --frame:#1b2833;
+  --f-display:"Unbounded","Golos Text",system-ui,sans-serif;
+  --f-body:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f161c; --surface:#17212a; --surface-2:#1c2832; --ink:#e6edf2; --muted:#93a4b1; --line:#2a3843;
+  --accent:#6fb0de; --accent-ink:#0b1720; --accent-soft:#1b3243;
+  --gold:#e7b04a; --gold-soft:#3a2d12; --danger:#ff8a80; --danger-soft:#3d1a18; --ok:#7fd1a0; --ok-soft:#163324;
+  --frame:#05090c; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0f161c; --surface:#17212a; --surface-2:#1c2832; --ink:#e6edf2; --muted:#93a4b1; --line:#2a3843;
+  --accent:#6fb0de; --accent-ink:#0b1720; --accent-soft:#1b3243;
+  --gold:#e7b04a; --gold-soft:#3a2d12; --danger:#ff8a80; --danger-soft:#3d1a18; --ok:#7fd1a0; --ok-soft:#163324;
+  --frame:#05090c; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 40px}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3{text-wrap:balance;margin:0}
+
+.top{max-width:1240px;margin:0 auto 18px;display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.brand b{font-family:var(--f-display);font-weight:700;font-size:20px;letter-spacing:-.01em}
+.brand b span{color:var(--accent)}
+.brand small{color:var(--muted);font-size:13px}
+.modes{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px;gap:2px}
+.modes button{border:0;background:none;padding:7px 16px;border-radius:999px;font-weight:600;font-size:14px;color:var(--muted)}
+.modes button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+
+.stage{max-width:1240px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:24px;align-items:start}
+@media (max-width:960px){.stage{grid-template-columns:minmax(0,1fr)}}
+.device-wrap{display:flex;justify-content:center;min-width:0}
+
+/* Kiosk: a landscape touch screen in a dark bezel */
+.device{background:var(--surface);color:var(--ink);display:flex;flex-direction:column;min-width:0;width:100%}
+.device.kiosk{max-width:920px;min-height:640px;border:14px solid var(--frame);border-radius:22px;font-size:17px;box-shadow:0 18px 40px -24px rgba(10,30,50,.45)}
+.device.phone{max-width:390px;min-height:760px;border:10px solid var(--frame);border-radius:40px;font-size:15px;overflow:hidden;box-shadow:0 18px 40px -24px rgba(10,30,50,.45)}
+@media (max-width:520px){.device.kiosk{border-width:8px;border-radius:14px;min-height:0}.device.phone{border-width:6px;border-radius:28px;min-height:0}}
+
+.bar{display:flex;align-items:center;gap:10px;padding:12px 18px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.device.kiosk .bar{border-radius:8px 8px 0 0}
+.bar .where{flex:1;min-width:0;font-weight:600;font-size:.9em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .where small{display:block;font-weight:400;color:var(--muted);font-size:.85em}
+.iconbtn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:6px 12px;font-size:.85em;font-weight:600}
+.statusbar{display:flex;justify-content:space-between;padding:8px 22px 4px;font-size:12px;font-weight:600;font-family:var(--f-mono)}
+
+.screen{padding:24px;display:flex;flex-direction:column;gap:20px;flex:1;min-width:0}
+.device.phone .screen{padding:18px}
+.eyebrow{font-size:.75em;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 6px}
+.h1{font-family:var(--f-display);font-weight:500;font-size:1.6em;line-height:1.2;letter-spacing:-.01em}
+.device.phone .h1{font-size:1.35em}
+.lead{color:var(--muted);margin:6px 0 0;max-width:60ch}
+
+.choices{display:grid;gap:12px}
+.device.kiosk .choices{grid-template-columns:1.3fr 1fr}
+.device.kiosk .choices .choice.primary{grid-row:span 2}
+.choice{text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;gap:6px;min-height:92px;transition:border-color .15s,transform .15s}
+.choice:hover{border-color:var(--accent)}
+.choice:active{transform:scale(.99)}
+.choice .t{font-weight:700;font-size:1.1em}
+.choice .d{color:var(--muted);font-size:.9em}
+.choice.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);justify-content:flex-end;min-height:180px}
+.choice.primary .d{color:inherit;opacity:.85}
+.choice.primary .t{font-family:var(--f-display);font-weight:500;font-size:1.35em;line-height:1.25}
+.tag{display:inline-block;font-size:.72em;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:6px;background:var(--gold-soft);color:var(--gold);align-self:flex-start}
+.choice.primary .tag{background:rgba(255,255,255,.18);color:inherit}
+.sos{margin-top:auto;display:flex;gap:10px;align-items:center;padding:12px 14px;border-radius:12px;background:var(--danger-soft);color:var(--danger);font-size:.88em;font-weight:500}
+.sos b{font-family:var(--f-mono);font-size:1.2em}
+
+.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
+.device.phone .grid{grid-template-columns:1fr}
+.card{text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+button.card:hover{border-color:var(--accent)}
+.card .t{font-weight:700}
+.card .d{color:var(--muted);font-size:.85em}
+.card .m{font-family:var(--f-mono);font-size:.78em;color:var(--muted)}
+
+.doc{display:flex;gap:14px;align-items:flex-start}
+.avatar{flex:none;width:46px;height:46px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-weight:700;font-family:var(--f-display);font-size:.95em}
+.doc .body{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.quick{display:flex;flex-wrap:wrap;gap:6px}
+.slotbtn{border:1px solid var(--accent);color:var(--accent);background:var(--surface);border-radius:8px;padding:5px 10px;font-family:var(--f-mono);font-size:.82em;font-weight:700}
+.slotbtn:hover{background:var(--accent-soft)}
+
+.section{display:flex;flex-direction:column;gap:10px}
+.section h3{font-size:.95em;font-weight:700}
+.section .hint{color:var(--muted);font-size:.85em;margin:-6px 0 0}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;font-size:.9em;font-weight:500}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.chip.flag{border-color:color-mix(in srgb,var(--danger) 35%,var(--line))}
+.chip.flag[aria-pressed="true"]{background:var(--danger);border-color:var(--danger);color:#fff}
+.flagbox{border:1px solid color-mix(in srgb,var(--danger) 30%,var(--line));background:var(--danger-soft);border-radius:14px;padding:14px}
+.flagbox h3{color:var(--danger)}
+textarea,input[type=text],input[type=tel],input[type=number]{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:12px 14px}
+textarea{min-height:96px;resize:vertical}
+.row{display:flex;gap:12px;flex-wrap:wrap}
+.row>*{flex:1 1 160px;min-width:0}
+label.f{display:flex;flex-direction:column;gap:6px;font-weight:600;font-size:.9em}
+label.f small{font-weight:400;color:var(--muted)}
+.range{display:flex;align-items:center;gap:12px}
+.range input{flex:1;accent-color:var(--accent)}
+.range output{font-family:var(--f-mono);font-weight:700;min-width:3ch;text-align:right}
+.err{color:var(--danger);font-size:.85em;font-weight:500}
+
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:auto;padding-top:4px}
+.btn{border:0;border-radius:12px;padding:14px 22px;font-weight:700;background:var(--accent);color:var(--accent-ink)}
+.btn.sec{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.btn.danger{background:var(--danger);color:#fff}
+.btn.wide{flex:1}
+.linkbtn{border:0;background:none;color:var(--accent);font-weight:600;padding:0;text-decoration:underline;text-underline-offset:3px}
+
+.spinner{width:46px;height:46px;border-radius:50%;border:4px solid var(--accent-soft);border-top-color:var(--accent);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spinner{animation-duration:3s}}
+.center{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px;flex:1;padding:40px 0}
+
+.result{border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.result .head{background:var(--accent-soft);padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.result .dept{font-family:var(--f-display);font-weight:500;font-size:1.35em;line-height:1.2}
+.result .loc{font-family:var(--f-mono);font-size:.82em;color:var(--muted)}
+.result .inner{padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.pills{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.pill{font-size:.75em;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line)}
+.pill.routine{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.pill.soon{background:var(--gold-soft);color:var(--gold);border-color:transparent}
+.pill.emergency{background:var(--danger-soft);color:var(--danger);border-color:transparent}
+.conf{display:flex;align-items:center;gap:8px;font-size:.8em;color:var(--muted)}
+.conf .track{width:90px;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.conf .fill{height:100%;background:var(--accent)}
+.note{font-size:.82em;color:var(--muted);border-left:3px solid var(--line);padding-left:10px}
+ul.plain{margin:0;padding-left:18px}
+
+.emerg{background:var(--danger-soft);border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:12px;color:var(--ink)}
+.emerg .h1{color:var(--danger)}
+.bignum{font-family:var(--f-mono);font-weight:700;font-size:2.2em;color:var(--danger)}
+
+.days{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+.day{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:8px 12px;text-align:center;min-width:76px}
+.day b{display:block;font-size:.9em}
+.day span{font-family:var(--f-mono);font-size:.78em;color:var(--muted)}
+.day[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.day[aria-pressed="true"] span{color:inherit;opacity:.85}
+.times{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:8px}
+.time{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 0;font-family:var(--f-mono);font-weight:700;font-size:.9em}
+.time:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.time:disabled{background:var(--surface-2);color:var(--muted);text-decoration:line-through;cursor:not-allowed;opacity:.7}
+.legend{display:flex;gap:14px;font-size:.8em;color:var(--muted)}
+
+.summary{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:.9em;border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:var(--surface-2)}
+.summary dt{color:var(--muted)}
+.summary dd{margin:0;font-weight:600;min-width:0}
+
+.ticket{border:2px dashed var(--line);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:14px;background:var(--surface)}
+.ticket .num{font-family:var(--f-mono);font-weight:700;font-size:2.6em;letter-spacing:.02em;color:var(--accent);line-height:1}
+.ticket .top2{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}
+.qr{display:grid;grid-template-columns:repeat(17,1fr);width:102px;height:102px;flex:none;padding:4px;background:#fff;border-radius:6px}
+.qr i{background:#fff}.qr i.on{background:#14212b}
+.okmsg{background:var(--ok-soft);color:var(--ok);border-radius:12px;padding:10px 14px;font-weight:600;font-size:.9em}
+
+.notes{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px;position:sticky;top:16px}
+.notes h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.notes .step{font-family:var(--f-display);font-weight:500;font-size:17px;line-height:1.3}
+.notes p{margin:0;color:var(--ink);font-size:14px}
+.notes .src{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
+
+/* Staff board */
+.board{width:100%;max-width:1240px;display:flex;flex-direction:column;gap:18px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.stat .v{font-family:var(--f-display);font-size:28px;font-weight:500;font-variant-numeric:tabular-nums}
+.stat .l{color:var(--muted);font-size:13px}
+.tablewrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:14px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;background:var(--surface-2)}
+td.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+tr.sample td{color:var(--muted)}
+.empty{padding:22px;color:var(--muted)}
+</style>
+
+<header class="top">
+  <div class="brand"><b>Зөв<span>Эмч</span></b><small>Шинж тэмдгээр зөв эмчээ олж цаг авах систем · прототип</small></div>
+  <nav class="modes" aria-label="Харах горим">
+    <button id="m-kiosk" data-mode="kiosk" aria-pressed="true">Киоск</button>
+    <button id="m-phone" data-mode="phone" aria-pressed="false">Утас</button>
+    <button id="m-board" data-mode="board" aria-pressed="false">Ажилтны самбар</button>
+  </nav>
+</header>
+
+<main class="stage" id="stage">
+  <div class="device-wrap" id="deviceWrap"></div>
+  <aside class="notes" id="notes" aria-live="polite"></aside>
+</main>
+
+<script>
+/* ---------- Data (demo hospital) ---------- */
+const DEPTS=[
+  {id:'dotor',  name:'Дотрын тасаг',            L:'Д', room:'201', floor:2, desc:'Ханиад, халуурал, ходоод гэдэс, ерөнхий үзлэг'},
+  {id:'medrel', name:'Мэдрэлийн тасаг',         L:'М', room:'305', floor:3, desc:'Толгой өвдөх, эргэх, мэдээ алдах, нойргүйдэл'},
+  {id:'zurh',   name:'Зүрх судасны тасаг',      L:'З', room:'310', floor:3, desc:'Зүрх дэлсэх, даралт ихсэх, хаван'},
+  {id:'chhh',   name:'Чих хамар хоолой',        L:'Ч', room:'118', floor:1, desc:'Чих, хоолой өвдөх, хамар битүүрэх'},
+  {id:'nud',    name:'Нүдний тасаг',            L:'Н', room:'122', floor:1, desc:'Хараа муудах, нүд улайх, өвдөх'},
+  {id:'arisi',  name:'Арьс, харшлын тасаг',     L:'А', room:'214', floor:2, desc:'Тууралт, загатнах, батга, харшил'},
+  {id:'gemtel', name:'Гэмтэл, ясны тасаг',      L:'Г', room:'104', floor:1, desc:'Үе мөч, нуруу, булчин, хугарал'},
+  {id:'emegtei',name:'Эмэгтэйчүүдийн тасаг',    L:'Э', room:'401', floor:4, desc:'Сарын тэмдэг, жирэмслэлт'},
+  {id:'huuhed', name:'Хүүхдийн тасаг',          L:'Х', room:'110', floor:1, desc:'16 хүртэлх насны хүүхэд'},
+  {id:'shees',  name:'Бөөр, шээсний замын тасаг',L:'Б', room:'318', floor:3, desc:'Шээхэд өвдөх, бөөр, бэлхүүс'}
+];
+const DOCTORS=[
+  ['dotor','Б. Оюунчимэг','Их эмч',14],['dotor','Г. Тэмүүлэн','Их эмч',6],
+  ['medrel','Д. Сарангэрэл','Мэдрэлийн эмч',18],['medrel','Ц. Ганбат','Мэдрэлийн эмч',9],
+  ['zurh','Н. Мөнхзул','Зүрх судасны эмч',21],['zurh','Ж. Батзориг','Зүрх судасны эмч',7],
+  ['chhh','Э. Номин','ЧХХ-ийн эмч',11],['chhh','С. Билгүүн','ЧХХ-ийн эмч',5],
+  ['nud','О. Ариунаа','Нүдний эмч',16],['nud','Т. Энхболд','Нүдний эмч',8],
+  ['arisi','Л. Цэцэгмаа','Арьсны эмч',12],['arisi','П. Хүслэн','Харшлын эмч',4],
+  ['gemtel','Б. Эрдэнэбат','Гэмтлийн эмч',19],['gemtel','Х. Анужин','Гэмтлийн эмч',6],
+  ['emegtei','Р. Солонго','Эх барих эмэгтэйчүүдийн эмч',15],['emegtei','М. Уянга','Эх барих эмэгтэйчүүдийн эмч',8],
+  ['huuhed','Ч. Нарантуяа','Хүүхдийн эмч',17],['huuhed','А. Төгөлдөр','Хүүхдийн эмч',5],
+  ['shees','Ү. Батбаяр','Нефрологич',13],['shees','Ш. Мишээл','Урологич',7]
+].map((d,i)=>({id:'dr'+i,dept:d[0],name:d[1],title:d[2],years:d[3]}));
+const AREAS=[
+  ['head','Толгой','medrel'],['eye','Нүд','nud'],['ent','Чих, хамар, хоолой','chhh'],['chest','Цээж, зүрх','zurh'],
+  ['belly','Хэвлий, ходоод','dotor'],['back','Нуруу, бэлхүүс','gemtel'],['limbs','Гар, хөл, үе','gemtel'],
+  ['skin','Арьс','arisi'],['uro','Шээс, бэлгийн эрхтэн','shees'],['general','Ерөнхий (халуурах, ядрах)','dotor']
+];
+const FLAGS=[
+  ['chest','Цээж хүчтэй өвдөж, гар, эрүү рүү дамжиж байна'],
+  ['breath','Амьсгал огцом давчдаж байна'],
+  ['stroke','Нүүр мурийх, гар хөл саажих, яриа ороогдох'],
+  ['bleed','Их хэмжээний цус алдалт'],
+  ['faint','Ухаан алдах, таталт өгөх'],
+  ['headache','Гэнэтийн, маш хүчтэй толгой өвдөлт']
+];
+const FLAG_WORDS=['ухаан ал','таталт','саажи','нүүр мурий','амьсгал давч','амьсгал боогд','цус их','их цус','цээж хүчтэй'];
+const DURATIONS=['Өнөөдөр эхэлсэн','2–3 хоног','1 долоо хоног','1 сараас дээш'];
+const KW=[
+  ['medrel',['толгой','эргэ','мэдээ ал','нойр','бадайр']],['zurh',['зүрх','дэлс','даралт','хаван']],
+  ['chhh',['чих','хоолой','хамар','залгих','найтаа']],['nud',['нүд','хараа','нулимс']],
+  ['arisi',['арьс','тууралт','загат','батга','харшил']],['gemtel',['яс','үе ','нуруу','хугар','булчин','өвдөг','мөр','шагай','бэртэ']],
+  ['emegtei',['сарын тэмдэг','жирэм','умай','өндгөвч']],['shees',['шээ','бөөр','бэлхүүс']],
+  ['dotor',['ходоод','гэдэс','суулга','бөөлж','дотор муу','халуу','ханиа','ядар','хоолны дуршил']]
+];
+const WD=['Ням','Даваа','Мягмар','Лхагва','Пүрэв','Баасан','Бямба'];
+const TIMES=['09:00','09:30','10:00','10:30','11:00','11:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30'];
+
+const dept=id=>DEPTS.find(d=>d.id===id);
+const doctor=id=>DOCTORS.find(d=>d.id===id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const hash=s=>{let h=2166136261;for(const ch of s){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0};
+const initials=n=>n.replace(/^[^.]+\.\s*/,'').slice(0,2);
+
+/* Next 5 working days (Sunday closed) */
+const DAYS=(()=>{const out=[];const d=new Date();d.setHours(0,0,0,0);
+  while(out.length<5){if(d.getDay()!==0){const i=out.length;
+    out.push({key:d.toISOString().slice(0,10),label:i===0?'Өнөөдөр':i===1&&isTomorrow(d)?'Маргааш':WD[d.getDay()],
+      md:String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0'),today:i===0&&sameDay(d,new Date())})}
+    d.setDate(d.getDate()+1)}return out;
+  function sameDay(a,b){return a.toDateString()===b.toDateString()}
+  function isTomorrow(x){const t=new Date();t.setDate(t.getDate()+1);return sameDay(x,t)}})();
+
+/* ---------- State ---------- */
+const S={mode:'kiosk',screen:'home',hist:[],path:null,deptId:null,doctorId:null,dayIdx:0,
+  form:{areas:[],flags:[],text:'',duration:'',severity:5,age:'',sex:''},triage:null,patient:{rd:'',phone:''},
+  bookings:[],lastId:null,emergencyFrom:null,cancelArm:null,staffCalled:false};
+try{const b=JSON.parse(localStorage.getItem('zuvemch.bookings')||'[]');if(Array.isArray(b))S.bookings=b}catch(e){}
+const save=()=>{try{localStorage.setItem('zuvemch.bookings',JSON.stringify(S.bookings))}catch(e){}};
+
+function isTaken(docId,dayKey,time){
+  if(S.bookings.some(b=>b.doctorId===docId&&b.day===dayKey&&b.time===time))return true;
+  const day=DAYS.find(d=>d.key===dayKey);
+  if(day&&day.today){const [h,m]=time.split(':').map(Number);const now=new Date();if(h*60+m<=now.getHours()*60+now.getMinutes()+15)return true}
+  return hash(docId+dayKey+time)%10<4;
+}
+function nextFree(docId,n=3){const out=[];for(const d of DAYS){for(const t of TIMES){if(!isTaken(docId,d.key,t)){out.push({day:d,time:t});if(out.length>=n)return out}}}return out}
+
+/* ---------- Navigation ---------- */
+function go(screen){S.hist.push(S.screen);S.screen=screen;render(true)}
+function back(){S.screen=S.hist.pop()||'home';render(true)}
+function home(){S.hist=[];S.screen='home';S.path=null;S.triage=null;S.staffCalled=false;
+  S.form={areas:[],flags:[],text:'',duration:'',severity:5,age:'',sex:''};render(true)}
+
+const TITLES={home:'Нүүр',depts:'Тасаг сонгох',doctors:'Эмч сонгох',symptoms:'Зовиураа оруулах',analyzing:'Шинжилж байна',
+  result:'Санал болгох эмч',emergency:'Яаралтай тусламж',slots:'Цаг сонгох',identity:'Таны мэдээлэл',ticket:'Цаг баталгаажлаа',mybook:'Миний захиалга'};
+
+/* ---------- Screens ---------- */
+const V={};
+V.home=()=>`
+  <div><p class="eyebrow">Демо эмнэлэг · Амбулаторийн цаг</p>
+  <h1 class="h1">Сайн байна уу. Та юуны тулд ирсэн бэ?</h1></div>
+  <div class="choices">
+    <button class="choice primary" data-act="start-ai"><span class="tag">AI зөвлөгөө</span>
+      <span class="t">Зовиураа хэлээд зөв эмчээ олох</span>
+      <span class="d">Шинж тэмдгээ оруулбал аль тасгийн аль эмч дээр очихыг санал болгож, сул цаг гаргаж өгнө.</span></button>
+    <button class="choice" data-act="start-direct"><span class="t">Эмчээ мэдэж байна</span>
+      <span class="d">Тасаг, эмчээ сонгоод шууд цаг авах</span></button>
+    <button class="choice" data-act="mybook"><span class="t">Миний захиалга</span>
+      <span class="d">${S.bookings.length?S.bookings.length+' захиалга байна':'Авсан цагаа харах, цуцлах'}</span></button>
+  </div>
+  <div class="sos">Амь насанд аюултай байдал үүссэн бол цаг авалгүйгээр яаралтай тусламжийн тасаг руу очно уу. <b>103</b></div>`;
+
+V.depts=()=>`
+  <div><h1 class="h1">Тасгаа сонгоно уу</h1><p class="lead">Аль тасаг болохоо мэдэхгүй байвал <button class="linkbtn" data-act="start-ai">зовиураа хэлж</button> AI-аар санал авч болно.</p></div>
+  <div class="grid">${DEPTS.map(d=>`<button class="card" data-act="pick-dept" data-id="${d.id}">
+    <span class="t">${esc(d.name)}</span><span class="d">${esc(d.desc)}</span><span class="m">${d.floor}-р давхар · ${d.room} тоот</span></button>`).join('')}</div>`;
+
+const doctorCards=(deptId)=>DOCTORS.filter(d=>d.dept===deptId).map(d=>{const free=nextFree(d.id);return `
+  <div class="card"><div class="doc"><div class="avatar">${esc(initials(d.name))}</div><div class="body">
+    <span class="t">${esc(d.name)}</span><span class="d">${esc(d.title)} · ${d.years} жил ажилласан</span>
+    <div class="quick">${free.length?free.map(f=>`<button class="slotbtn" data-act="quick" data-doc="${d.id}" data-day="${f.day.key}" data-time="${f.time}">${esc(f.day.label)} ${f.time}</button>`).join(''):'<span class="d">Ойрын 5 хоногт сул цаг алга</span>'}</div>
+    <button class="linkbtn" data-act="pick-doc" data-id="${d.id}" style="align-self:flex-start">Бүх цагийг харах</button>
+  </div></div></div>`}).join('');
+
+V.doctors=()=>{const d=dept(S.deptId);return `
+  <div><p class="eyebrow">${esc(d.name)} · ${d.floor}-р давхар, ${d.room} тоот</p><h1 class="h1">Эмчээ сонгоно уу</h1>
+  <p class="lead">Хамгийн ойрын сул цаг дээр дарж шууд захиалж болно.</p></div>
+  <div class="grid" style="grid-template-columns:1fr">${doctorCards(d.id)}</div>`};
+
+V.symptoms=()=>{const f=S.form;return `
+  <div><h1 class="h1">Таны зовиур юу вэ?</h1><p class="lead">Мэдэж буйгаа оруулна уу. Систем аль тасгийн эмч үзэх нь тохиромжтойг санал болгоно. Энэ нь онош биш.</p></div>
+  <div class="section flagbox"><h3>Эхлээд: эдгээрийн аль нэг байна уу?</h3>
+    <div class="chips">${FLAGS.map(([k,t])=>`<button class="chip flag" data-chip="flags" data-k="${k}" aria-pressed="${f.flags.includes(k)}">${esc(t)}</button>`).join('')}</div></div>
+  <div class="section"><h3>Хаана нь өвдөж, зовж байна вэ?</h3><p class="hint">Хэд хэдийг сонгож болно</p>
+    <div class="chips">${AREAS.map(([k,t])=>`<button class="chip" data-chip="areas" data-k="${k}" aria-pressed="${f.areas.includes(k)}">${esc(t)}</button>`).join('')}</div></div>
+  <div class="section"><label class="f" for="sx-text">Өөрийнхөөрөө тайлбарлана уу <small>Жишээ: “3 хоног толгой өвдөж, нүд бүрэлзээд байна”</small></label>
+    <textarea id="sx-text" data-field="text" placeholder="Юу, хаана, хэзээнээс…">${esc(f.text)}</textarea></div>
+  <div class="section"><h3>Хэзээнээс эхэлсэн бэ?</h3>
+    <div class="chips">${DURATIONS.map(t=>`<button class="chip" data-chip="duration" data-k="${esc(t)}" aria-pressed="${f.duration===t}">${esc(t)}</button>`).join('')}</div></div>
+  <div class="section"><h3>Хэр хүчтэй вэ? (1 сул – 10 тэвчихийн аргагүй)</h3>
+    <div class="range"><input id="sx-sev" type="range" min="1" max="10" value="${f.severity}" data-field="severity" aria-label="Хүч"><output id="sevOut">${f.severity}</output></div></div>
+  <div class="row">
+    <label class="f" for="sx-age">Нас<input id="sx-age" type="number" min="0" max="120" inputmode="numeric" data-field="age" value="${esc(f.age)}" placeholder="Жишээ: 34"></label>
+    <div class="section"><h3>Хүйс</h3><div class="chips">${['Эрэгтэй','Эмэгтэй'].map(t=>`<button class="chip" data-chip="sex" data-k="${t}" aria-pressed="${f.sex===t}">${t}</button>`).join('')}</div></div>
+  </div>
+  <p class="err" id="sxErr" hidden>Дор хаяж нэг хэсэг сонгох эсвэл зовиураа бичнэ үү.</p>
+  <div class="actions"><button class="btn wide" data-act="analyze">Зөв эмчээ олох</button></div>`};
+
+V.analyzing=()=>`<div class="center"><div class="spinner" aria-hidden="true"></div>
+  <h2 class="h1" style="font-size:1.2em">Зовиурыг тань шинжилж байна</h2><p class="lead">Тохирох тасаг, эмч, сул цагийг хайж байна…</p></div>`;
+
+V.result=()=>{const t=S.triage,d=dept(t.department),alt=t.alternative&&dept(t.alternative);
+  const ul={routine:['routine','Энгийн дараалал'],soon:['soon','Ойрын 1–2 хоногт үзүүлэх'],emergency:['emergency','Яаралтай']}[t.urgency]||['routine','Энгийн дараалал'];
+  return `
+  <div class="result"><div class="head"><span class="eyebrow" style="margin:0">Танд санал болгох тасаг</span>
+    <span class="dept">${esc(d.name)}</span><span class="loc">${d.floor}-р давхар · ${d.room} тоот</span>
+    <div class="pills"><span class="pill ${ul[0]}">${ul[1]}</span>
+      <span class="conf">Итгэлцүүр <span class="track"><span class="fill" style="width:${Math.round(t.confidence*100)}%"></span></span> ${Math.round(t.confidence*100)}%</span></div></div>
+  <div class="inner"><p style="margin:0">${esc(t.reason)}</p>
+    ${t.notes&&t.notes.length?`<div><b style="font-size:.9em">Эмчид хэлэх зүйлс</b><ul class="plain">${t.notes.map(n=>`<li>${esc(n)}</li>`).join('')}</ul></div>`:''}
+    <p class="note">Энэ бол онош биш, зөвхөн чиглүүлэг. Эмч тань үзэж оношилно. ${t.source==='ai'?'AI загвараар боловсруулсан.':'Дүрмийн горимоор боловсруулсан (AI холбогдоогүй).'}</p>
+    ${alt?`<p style="margin:0;font-size:.9em">Өөр сонголт: <button class="linkbtn" data-act="alt">${esc(alt.name)}</button></p>`:''}
+  </div></div>
+  <div class="section"><h3>${esc(d.name)}-ийн эмч нар, ойрын сул цаг</h3>
+  <div class="grid" style="grid-template-columns:1fr">${doctorCards(d.id)}</div></div>
+  <div class="actions"><button class="btn sec" data-act="start-direct">Өөр тасаг сонгох</button></div>`};
+
+V.emergency=()=>`
+  <div class="emerg"><p class="eyebrow" style="color:var(--danger);margin:0">Цаг хүлээх шаардлагагүй</p>
+  <h1 class="h1">Яаралтай тусламжийн тасаг руу шууд очно уу</h1>
+  <p style="margin:0">Таны дурдсан шинж тэмдэг яаралтай үзлэг шаардаж болзошгүй. Ээлж хүлээлгүйгээр 1-р давхрын баруун орцны <b>Яаралтай тусламжийн тасагт</b> хандана уу. Эмнэлгийн гадна байгаа бол дуудна уу:</p>
+  <span class="bignum">103</span>
+  ${S.staffCalled?'<div class="okmsg">Ажилтан дуудах дохио өгөгдлөө (прототипт зөвхөн дүрслэл).</div>':''}</div>
+  <div class="actions">${S.mode==='kiosk'?`<button class="btn danger wide" data-act="call-staff">Ажилтан дуудах</button>`:''}
+  <button class="btn sec wide" data-act="ignore-emerg">Буруу сонгосон, буцах</button></div>`;
+
+V.slots=()=>{const d=doctor(S.doctorId),dp=dept(d.dept),day=DAYS[S.dayIdx];return `
+  <div class="card"><div class="doc"><div class="avatar">${esc(initials(d.name))}</div><div class="body">
+    <span class="t">${esc(d.name)}</span><span class="d">${esc(d.title)} · ${esc(dp.name)} · ${dp.room} тоот</span></div></div></div>
+  <div class="section"><h3>Өдөр</h3><div class="days">${DAYS.map((x,i)=>`<button class="day" data-act="day" data-i="${i}" aria-pressed="${i===S.dayIdx}"><b>${esc(x.label)}</b><span>${x.md}</span></button>`).join('')}</div></div>
+  <div class="section"><h3>Цаг</h3><div class="times">${TIMES.map(t=>`<button class="time" data-act="time" data-time="${t}" ${isTaken(d.id,day.key,t)?'disabled aria-label="'+t+' захиалагдсан"':''}>${t}</button>`).join('')}</div>
+  <div class="legend"><span>Үзлэг 30 минут</span><span>Зураастай нь захиалагдсан</span></div></div>`};
+
+V.identity=()=>{const d=doctor(S.doctorId),dp=dept(d.dept),day=DAYS.find(x=>x.key===S.slot.day);return `
+  <div><h1 class="h1">Цагаа баталгаажуулах</h1></div>
+  <dl class="summary"><dt>Тасаг</dt><dd>${esc(dp.name)}</dd><dt>Эмч</dt><dd>${esc(d.name)}</dd>
+    <dt>Цаг</dt><dd>${esc(day.label)}, ${day.md} · ${S.slot.time}</dd><dt>Өрөө</dt><dd>${dp.floor}-р давхар, ${dp.room} тоот</dd></dl>
+  ${S.mode==='kiosk'
+    ?`<button class="btn sec" data-act="fill-sample">ЭМД карт / иргэний үнэмлэх уншуулах (жишээ)</button>`
+    :`<button class="btn sec" data-act="fill-sample">e-Mongolia-аар нэвтрэх (жишээ)</button>`}
+  <div class="row">
+    <label class="f" for="pt-rd">Регистрийн дугаар<input id="pt-rd" type="text" data-pfield="rd" value="${esc(S.patient.rd)}" placeholder="АА00000000" autocomplete="off"></label>
+    <label class="f" for="pt-ph">Утасны дугаар <small>Сануулга очих дугаар</small><input id="pt-ph" type="tel" inputmode="numeric" data-pfield="phone" value="${esc(S.patient.phone)}" placeholder="8 оронтой"></label>
+  </div>
+  <p class="err" id="ptErr" hidden></p>
+  <div class="actions"><button class="btn wide" data-act="confirm">Цаг авах</button></div>`};
+
+function qrCells(seed){let h=hash(seed),out='';for(let r=0;r<17;r++)for(let c=0;c<17;c++){
+  const finder=(r<5&&c<5)||(r<5&&c>11)||(r>11&&c<5);let on;
+  if(finder){const rr=r>11?r-12:r,cc=c>11?c-12:c;on=rr===0||rr===4||cc===0||cc===4||(rr===2&&cc===2)}
+  else{h^=h<<13;h^=h>>>17;h^=h<<5;on=(h>>>0)%2===0}
+  out+=`<i class="${on?'on':''}"></i>`}return out}
+
+V.ticket=()=>{const b=S.bookings.find(x=>x.id===S.lastId);if(!b)return V.home();const d=doctor(b.doctorId),dp=dept(d.dept),day=DAYS.find(x=>x.key===b.day)||{label:b.day,md:''};return `
+  <div class="okmsg">Таны цаг амжилттай бүртгэгдлээ.</div>
+  <div class="ticket"><div class="top2"><div><p class="eyebrow">Дугаар</p><div class="num">${esc(b.ticket)}</div></div>
+    <div class="qr" aria-label="Жишээ код">${qrCells(b.id)}</div></div>
+    <dl class="summary"><dt>Эмч</dt><dd>${esc(d.name)}</dd><dt>Тасаг</dt><dd>${esc(dp.name)}</dd>
+    <dt>Цаг</dt><dd>${esc(day.label)} ${day.md} · ${b.time}</dd><dt>Өрөө</dt><dd>${dp.floor}-р давхар, ${dp.room} тоот</dd></dl>
+    <p class="note">Үзлэгээс 10 минутын өмнө өрөөний үүдэнд ирж, дугаараа уншуулна уу. ${b.triage?'Таны оруулсан зовиурын тэмдэглэл эмчид урьдчилан очно.':''}</p></div>
+  ${S.mode==='kiosk'?`<div class="actions"><button class="btn wide" data-act="print">Талон хэвлэх</button><button class="btn sec" data-act="home">Дуусгах</button></div>
+     <p class="note" id="printMsg" hidden>Прототип: бодит киоск дээр энд дулааны принтерээс талон хэвлэгдэнэ.</p>`
+   :`<p class="note">Бодит системд үзлэгийн өмнөх өдөр ${esc(maskPhone(b.phone))} дугаарт SMS сануулга очно (прототипт илгээхгүй).</p>
+     <div class="actions"><button class="btn wide" data-act="home">Дуусгах</button></div>`}`};
+const maskPhone=p=>p?p.slice(0,2)+'••'+p.slice(-2):'таны';
+
+V.mybook=()=>{const list=S.bookings.slice().sort((a,b)=>(a.day+a.time).localeCompare(b.day+b.time));return `
+  <div><h1 class="h1">Миний захиалга</h1><p class="lead">Энэ төхөөрөмж дээр авсан цагууд.</p></div>
+  ${list.length?`<div class="grid" style="grid-template-columns:1fr">${list.map(b=>{const d=doctor(b.doctorId),dp=dept(d.dept),day=DAYS.find(x=>x.key===b.day);return `
+    <div class="card"><div class="doc"><div class="avatar" style="font-family:var(--f-mono);font-size:.8em">${esc(b.ticket)}</div><div class="body">
+      <span class="t">${esc(day?day.label+' '+day.md:b.day)} · ${b.time}</span><span class="d">${esc(d.name)} · ${esc(dp.name)} · ${dp.room} тоот</span>
+      <button class="linkbtn" data-act="cancel" data-id="${b.id}" style="align-self:flex-start;color:var(--danger)">${S.cancelArm===b.id?'Дахин дарж цуцлахыг батална уу':'Цуцлах'}</button>
+    </div></div></div>`}).join('')}</div>`
+  :`<div class="card"><span class="t">Одоогоор захиалга алга</span><span class="d">Цаг авмагц энд харагдана.</span></div>`}
+  <div class="actions"><button class="btn" data-act="home">Нүүр хуудас</button></div>`};
+
+/* ---------- Presenter notes ---------- */
+const NOTES={
+  home:['Нүүр','Угтах ажилтны оронд үйлчлүүлэгч өөрөө сонгоно: зовиураа хэлж AI-аар чиглүүлэх, эсвэл мэддэг эмч дээрээ шууд цаг авах.'],
+  depts:['Шууд цаг авах','Эмчээ мэддэг үйлчлүүлэгчид AI шаардлагагүй. Тасаг → эмч → цаг гэсэн 3 алхмаар дуусна.'],
+  doctors:['Эмч сонгох','Эмч бүрийн хамгийн ойрын 3 сул цагийг шууд харуулж, нэг товшилтоор захиална.'],
+  symptoms:['Зовиур оруулах','Эхлээд яаралтай шинж тэмдгийг шалгана. Энэ хэсгийг AI биш, хатуу дүрэм шалгадаг тул алдах эрсдэлгүй. Дараа нь хэсэг, тайлбар, хугацаа, хүч, насыг асууна.'],
+  analyzing:['AI шинжилгээ','Зовиурыг AI загварт илгээж, тасгийн жагсаалтаас хамгийн тохирохыг сонгуулна. Нэр, регистр зэрэг хувийн мэдээллийг AI руу илгээдэггүй.'],
+  result:['Санал болгох','AI онош тавихгүй, зөвхөн тасаг санал болгоно. Итгэлцүүр бага бол Дотрын тасаг руу (ерөнхий үзлэг) чиглүүлнэ.'],
+  emergency:['Яаралтай','Яаралтай шинж тэмдэг илэрвэл цаг өгөхгүй, яаралтай тусламж руу шууд илгээнэ. Аюулгүй байдлын хамгийн чухал хэсэг.'],
+  slots:['Цаг сонгох','Эмчийн хуваарьт бодит сул цагууд. Бодит системд эмнэлгийн мэдээллийн системтэй (HIS) холбогдоно.'],
+  identity:['Баталгаажуулах','Киоск дээр ЭМД карт, иргэний үнэмлэх уншуулна. Утсан дээр e-Mongolia-аар нэвтэрнэ. Прототипт жишээ утгаар бөглөнө.'],
+  ticket:['Талон','Киоск талон хэвлэнэ, утас SMS сануулга илгээнэ. Зовиурын тэмдэглэл эмчид урьдчилан очдог тул эмчийн цаг хэмнэгдэнэ.'],
+  mybook:['Миний захиалга','Үйлчлүүлэгч цагаа өөрөө цуцалж, сул цагийг бусдад чөлөөлнө.']
+};
+function renderNotes(){const n=$('#notes');
+  if(S.mode==='board'){n.innerHTML=`<h2>Ажилтны самбар</h2><p class="step">Өнөөдрийн урсгал</p>
+    <p>Киоск, утаснаас авсан бүх цаг энд нэгдэнэ. AI чиглүүлэлтийн эзлэх хувь, яаралтай гэж шүүгдсэн тохиолдлыг удирдлага хянана.</p>
+    <p class="src">Саарал мөрүүд нь жишээ өгөгдөл. Энэ браузерт хийсэн захиалга таны өгөгдөл болж нэмэгдэнэ.</p>`;return}
+  const [t,p]=NOTES[S.screen]||NOTES.home;
+  n.innerHTML=`<h2>Энэ алхам</h2><p class="step">${esc(t)}</p><p>${esc(p)}</p>
+  <p class="src">${S.mode==='kiosk'?'Киоск горим: том товчлуур, мэдрэгчтэй дэлгэц, ЭМД карт уншигч, талон принтер.':'Утасны горим: гэрээсээ цаг авч, SMS сануулга авна. Ижил хуваарь ашигладаг.'}</p>`}
+
+/* ---------- Board ---------- */
+const SAMPLE_ROWS=[
+  ['09:00','Д-001','dr0','Киоск','AI','routine'],['09:30','М-001','dr2','Утас','AI','soon'],['10:00','Г-001','dr12','Киоск','Шууд','routine'],
+  ['10:30','Ч-001','dr6','Утас','AI','routine'],['11:00','А-001','dr10','Киоск','AI','routine'],['11:30','Э-001','dr14','Утас','Шууд','routine']];
+function renderBoard(){
+  const rows=[...SAMPLE_ROWS.map(r=>({time:r[0],ticket:r[1],doctorId:r[2],source:r[3],via:r[4],urgency:r[5],day:DAYS[0].key,sample:true})),
+    ...S.bookings.map(b=>({...b,via:b.triage?'AI':'Шууд',urgency:b.urgency||'routine'}))];
+  const ai=rows.filter(r=>r.via==='AI').length;
+  const urg={routine:'Энгийн',soon:'Ойрын хугацаанд',emergency:'Яаралтай'};
+  return `<div class="board">
+  <div class="stats">
+    <div class="stat"><div class="v">${rows.length}</div><div class="l">Нийт цаг</div></div>
+    <div class="stat"><div class="v">${Math.round(ai/rows.length*100)}%</div><div class="l">AI-аар чиглүүлсэн</div></div>
+    <div class="stat"><div class="v">${rows.filter(r=>r.source==='Киоск').length} / ${rows.filter(r=>r.source==='Утас').length}</div><div class="l">Киоск / Утас</div></div>
+    <div class="stat"><div class="v">${S.bookings.length}</div><div class="l">Энэ браузерт хийсэн</div></div>
+  </div>
+  <div class="tablewrap"><table><thead><tr><th>Өдөр, цаг</th><th>Дугаар</th><th>Эмч</th><th>Тасаг</th><th>Суваг</th><th>Чиглүүлэлт</th><th>Яаралтай байдал</th></tr></thead><tbody>
+  ${rows.sort((a,b)=>(a.day+a.time).localeCompare(b.day+b.time)).map(r=>{const d=doctor(r.doctorId),dp=dept(d.dept),day=DAYS.find(x=>x.key===r.day);return `<tr class="${r.sample?'sample':''}">
+    <td class="mono">${esc(day?day.md:r.day)} ${r.time}</td><td class="mono">${esc(r.ticket)}</td><td>${esc(d.name)}</td><td>${esc(dp.name)}</td>
+    <td>${r.source}</td><td>${r.via}${r.sample?' · жишээ':''}</td><td><span class="pill ${r.urgency}">${urg[r.urgency]||'Энгийн'}</span></td></tr>`}).join('')}
+  </tbody></table></div></div>`}
+
+/* ---------- Render ---------- */
+const $=s=>document.querySelector(s);
+function render(scrollTop){
+  document.querySelectorAll('.modes button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===S.mode));
+  const w=$('#deviceWrap');
+  if(S.mode==='board'){w.innerHTML=renderBoard();renderNotes();return}
+  const screenHtml=(V[S.screen]||V.home)();
+  const bar=S.screen==='home'?'':`<div class="bar">
+     <button class="iconbtn" data-act="back" aria-label="Буцах">← Буцах</button>
+     <div class="where">${esc(TITLES[S.screen]||'')}<small>${S.path==='ai'?'Зовиураар хайх':S.path==='direct'?'Шууд цаг авах':''}</small></div>
+     <button class="iconbtn" data-act="home">Нүүр</button></div>`;
+  const now=new Date();
+  w.innerHTML=`<div class="device ${S.mode}">
+    ${S.mode==='phone'?`<div class="statusbar"><span>${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}</span><span>ЗөвЭмч</span></div>`:''}
+    ${bar}<section class="screen" id="screen">${screenHtml}</section></div>`;
+  renderNotes();
+  if(scrollTop){const s=$('#screen');if(s&&s.getBoundingClientRect().top<0)s.scrollIntoView({block:'start'})}
+}
+
+/* ---------- Triage ---------- */
+function hasRedFlag(){const t=S.form.text.toLowerCase();
+  return S.form.flags.length>0||FLAG_WORDS.some(w=>t.includes(w))||(t.includes('цээж')&&t.includes('өвд')&&S.form.severity>=7)}
+
+function ruleTriage(){const f=S.form,score={};const add=(k,v)=>score[k]=(score[k]||0)+v;
+  f.areas.forEach(a=>add(AREAS.find(x=>x[0]===a)[2],2));
+  const t=' '+f.text.toLowerCase()+' ';KW.forEach(([k,ws])=>ws.forEach(w=>{if(t.includes(w))add(k,1)}));
+  if(f.sex==='Эмэгтэй'&&/сарын|жирэм|умай/.test(t))add('emegtei',2);
+  let ranked=Object.entries(score).sort((a,b)=>b[1]-a[1]);
+  const total=ranked.reduce((s,x)=>s+x[1],0);
+  let top=ranked[0]?ranked[0][0]:'dotor',alt=ranked[1]?ranked[1][0]:null;
+  let conf=ranked[0]?Math.min(.9,Math.max(.35,ranked[0][1]/(total+1)+.25)):.3;
+  const age=parseInt(f.age,10);
+  if(age>=0&&age<16){alt=top==='huuhed'?alt:top;top='huuhed';conf=Math.max(conf,.7)}
+  if(conf<.4){alt=top!=='dotor'?top:alt;top='dotor'}
+  const urgency=f.severity>=8||(f.duration===DURATIONS[0]&&f.severity>=6)?'soon':'routine';
+  const areaNames=f.areas.map(a=>AREAS.find(x=>x[0]===a)[1].toLowerCase()).join(', ');
+  const reason=top==='huuhed'?'16 хүртэлх насны хүүхдийг эхлээд хүүхдийн эмч үзэж, шаардлагатай бол нарийн мэргэжлийн эмч рүү илгээнэ.'
+    :top==='dotor'&&conf<.5?'Зовиурыг тань нэг тасагт тодорхой хамааруулахад хангалтгүй тул эхлээд дотрын эмч ерөнхий үзлэг хийж, шаардлагатай бол зөв мэргэжилтэн рүү илгээнэ.'
+    :`${areaNames?'Таны сонгосон “'+areaNames+'” хэсгийн ':'Таны тайлбарласан '}зовиурыг ${dept(top).name.toLowerCase()} үздэг.`;
+  const notes=[];if(f.duration)notes.push('Хугацаа: '+f.duration.toLowerCase());notes.push('Хүч: 10-аас '+f.severity);if(f.text.trim())notes.push('Өөрийн тайлбар: “'+f.text.trim().slice(0,120)+'”');
+  return {department:top,alternative:alt&&alt!==top?alt:null,urgency,confidence:conf,reason,notes,source:'rules'}}
+
+let samplerP=null;
+function getSampler(){if(!samplerP)samplerP=(window.claude&&window.claude.use)?Promise.race([window.claude.use('sample').catch(()=>null),new Promise(r=>setTimeout(()=>r(null),6000))]):Promise.resolve(null);return samplerP}
+
+async function aiTriage(){const s=await getSampler();if(!s)return null;const f=S.form;
+  const prompt=`You route outpatients at a Mongolian hospital to the right outpatient department. You do NOT diagnose and never name a disease.
+Departments (id: name — scope):
+${DEPTS.map(d=>`${d.id}: ${d.name} — ${d.desc}`).join('\n')}
+Rules: patients under 16 go to huuhed. If the picture is unclear, choose dotor (general internal medicine). Mark urgency "emergency" only for signs that need the emergency room now; "soon" for things to be seen within 1-2 days; otherwise "routine".
+Patient input:
+- Body areas: ${f.areas.map(a=>AREAS.find(x=>x[0]===a)[1]).join(', ')||'не сонгоогүй'}
+- Own words: ${f.text||'(none)'}
+- Since: ${f.duration||'unknown'}; severity ${f.severity}/10; age ${f.age||'unknown'}; sex ${f.sex||'unknown'}
+Reply with JSON only, no prose: {"department":"<id>","alternative":"<id or null>","urgency":"routine|soon|emergency","confidence":<0..1>,"reason":"<1-2 plain Mongolian sentences to the patient explaining why this department, no diagnosis>","notes":["<up to 3 short Mongolian notes the patient should tell the doctor>"]}`;
+  try{const r=await s(prompt,{modelTier:'quick'});const m=(r&&r.text||'').match(/\{[\s\S]*\}/);if(!m)return null;
+    const j=JSON.parse(m[0]);if(!dept(j.department))return null;
+    return {department:j.department,alternative:dept(j.alternative)?j.alternative:null,urgency:['routine','soon','emergency'].includes(j.urgency)?j.urgency:'routine',
+      confidence:Math.max(0,Math.min(1,Number(j.confidence)||.6)),reason:String(j.reason||''),notes:Array.isArray(j.notes)?j.notes.slice(0,3).map(String):[],source:'ai'}
+  }catch(e){return null}}
+
+async function analyze(){const f=S.form;
+  if(!f.areas.length&&!f.text.trim()&&!f.flags.length){const e=$('#sxErr');if(e)e.hidden=false;return}
+  if(hasRedFlag()){S.emergencyFrom='rules';go('emergency');return}
+  go('analyzing');
+  const [ai]=await Promise.all([aiTriage(),new Promise(r=>setTimeout(r,900))]);
+  if(S.screen!=='analyzing')return;
+  S.triage=ai||ruleTriage();
+  S.hist.pop();S.screen=S.triage.urgency==='emergency'?'emergency':'result';render(true)}
+
+/* ---------- Booking ---------- */
+function book(){const rd=S.patient.rd.trim().toUpperCase(),ph=S.patient.phone.replace(/\D/g,'');const e=$('#ptErr');
+  if(!/^[А-ЯӨҮЁ]{2}\d{8}$/.test(rd)){e.textContent='Регистрийн дугаар 2 үсэг, 8 тооноос бүрдэнэ.';e.hidden=false;return}
+  if(!/^\d{8}$/.test(ph)){e.textContent='Утасны дугаар 8 оронтой байна.';e.hidden=false;return}
+  const d=doctor(S.doctorId),dp=dept(d.dept);
+  if(isTaken(d.id,S.slot.day,S.slot.time)){e.textContent='Энэ цагийг саяхан өөр хүн авчихлаа. Өөр цаг сонгоно уу.';e.hidden=false;return}
+  const n=S.bookings.filter(b=>doctor(b.doctorId).dept===dp.id).length+12;
+  const b={id:'b'+Date.now().toString(36),doctorId:d.id,day:S.slot.day,time:S.slot.time,ticket:dp.L+'-'+String(n).padStart(3,'0'),
+    source:S.mode==='kiosk'?'Киоск':'Утас',triage:S.path==='ai'&&S.triage?{dept:S.triage.department,source:S.triage.source}:null,
+    urgency:S.path==='ai'&&S.triage?S.triage.urgency:'routine',phone:ph};
+  S.bookings.push(b);save();S.lastId=b.id;S.hist=['home'];S.screen='ticket';render(true)}
+
+/* ---------- Events ---------- */
+document.addEventListener('click',ev=>{
+  const m=ev.target.closest('[data-mode]');if(m){S.mode=m.dataset.mode;render();return}
+  const chip=ev.target.closest('[data-chip]');
+  if(chip){const g=chip.dataset.chip,k=chip.dataset.k;
+    if(g==='areas'||g==='flags'){const arr=S.form[g];const i=arr.indexOf(k);i<0?arr.push(k):arr.splice(i,1);chip.setAttribute('aria-pressed',i<0)}
+    else{S.form[g]=S.form[g]===k?'':k;chip.parentElement.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed',c.dataset.k===S.form[g]))}
+    const e=$('#sxErr');if(e)e.hidden=true;return}
+  const a=ev.target.closest('[data-act]');if(!a)return;const act=a.dataset.act;
+  switch(act){
+    case 'back':back();break;
+    case 'home':home();break;
+    case 'start-ai':S.path='ai';go('symptoms');break;
+    case 'start-direct':S.path='direct';go('depts');break;
+    case 'mybook':S.cancelArm=null;go('mybook');break;
+    case 'pick-dept':S.deptId=a.dataset.id;go('doctors');break;
+    case 'pick-doc':S.doctorId=a.dataset.id;S.dayIdx=0;go('slots');break;
+    case 'quick':S.doctorId=a.dataset.doc;S.slot={day:a.dataset.day,time:a.dataset.time};go('identity');break;
+    case 'day':S.dayIdx=+a.dataset.i;render();break;
+    case 'time':S.slot={day:DAYS[S.dayIdx].key,time:a.dataset.time};go('identity');break;
+    case 'alt':S.triage={...S.triage,department:S.triage.alternative,alternative:S.triage.department,
+      reason:'Та өөр сонголтыг сонголоо. Хэрэв эргэлзэж байвал анхны санал болгосон тасагт үзүүлэхийг зөвлөж байна.'};render(true);break;
+    case 'analyze':analyze();break;
+    case 'call-staff':S.staffCalled=true;render();break;
+    case 'ignore-emerg':S.form.flags=[];back();break;
+    case 'fill-sample':S.patient={rd:'ЖШ00000001',phone:'99000000'};render();break;
+    case 'confirm':book();break;
+    case 'print':{const p=$('#printMsg');if(p)p.hidden=false;break}
+    case 'cancel':if(S.cancelArm===a.dataset.id){S.bookings=S.bookings.filter(b=>b.id!==a.dataset.id);save();S.cancelArm=null}else S.cancelArm=a.dataset.id;render();break;
+  }});
+document.addEventListener('input',ev=>{const t=ev.target;
+  if(t.dataset.field){S.form[t.dataset.field]=t.type==='range'?+t.value:t.value;if(t.type==='range')$('#sevOut').textContent=t.value;const e=$('#sxErr');if(e)e.hidden=true}
+  if(t.dataset.pfield){S.patient[t.dataset.pfield]=t.value;const e=$('#ptErr');if(e)e.hidden=true}});
+
+render();
+</script>
+
+</body>
+</html>
