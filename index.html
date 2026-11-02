@@ -104,19 +104,37 @@ svg{display:block}
 .tile{flex-direction:column;align-items:flex-start;justify-content:space-between;min-height:130px}
 .device.phone .tile{min-height:104px}
 
-/* Home */
-.homegrid{display:grid;gap:16px;flex:1}
-.device.kiosk .homegrid{grid-template-columns:1.2fr 1fr;grid-template-rows:1fr 1fr}
-.homecard{border:2px solid var(--line);background:var(--surface);border-radius:22px;padding:26px;text-align:left;display:flex;flex-direction:column;justify-content:space-between;gap:14px;min-height:150px}
-.homecard:hover{border-color:var(--accent)}
-.homecard .ic{width:56px;height:56px;border-radius:16px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center}
-.homecard b{font-size:1.25em;line-height:1.2;display:block}
-.homecard span{color:var(--muted);font-size:.85em}
-.homecard.main{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-.device.kiosk .homecard.main{grid-row:span 2}
-.homecard.main .ic{background:rgba(255,255,255,.18);color:inherit}
-.homecard.main b{font-size:1.6em}
-.homecard.main span{color:inherit;opacity:.85}
+/* Home: one yes/no question, two answer cards, how-it-works strip */
+.content.home{gap:20px}
+.device.kiosk .content.home{padding:28px 40px 22px}
+.hello{display:flex;flex-direction:column;gap:6px}
+.hello .q{font-size:1.75em}
+.device.phone .hello .q{font-size:1.5em}
+.answers{display:grid;gap:16px}
+.device.kiosk .answers{grid-template-columns:1fr 1fr}
+.answer{position:relative;border:2px solid var(--line);background:var(--surface);border-radius:22px;padding:24px;text-align:left;display:flex;flex-direction:column;gap:12px;min-height:220px;transition:border-color .12s,transform .12s}
+.device.phone .answer{min-height:0;padding:20px;border-radius:18px}
+.answer:hover{border-color:var(--accent)}
+.answer:active{transform:scale(.99)}
+.answer .say{font-size:.75em;font-weight:700;color:var(--muted);letter-spacing:.02em}
+.answer b{font-size:1.45em;line-height:1.2}
+.answer .what{color:var(--muted);font-size:.9em;flex:1}
+.answer .go{display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:700;color:var(--accent);border-top:1px solid var(--line);padding-top:14px}
+.answer .go i{width:44px;height:44px;border-radius:50%;background:var(--accent-soft);display:grid;place-items:center;font-style:normal}
+.answer.main{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.answer.main .say,.answer.main .what{color:inherit;opacity:.85}
+.answer.main .go{color:inherit;border-top-color:rgba(255,255,255,.3)}
+.answer.main .go i{background:var(--surface);color:var(--accent)}
+.pick{position:absolute;top:-13px;left:22px;background:#f5b400;color:#1d1600;font-size:.7em;font-weight:700;padding:5px 12px;border-radius:999px}
+.how{display:flex;gap:10px;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:.8em}
+.how span{display:inline-flex;align-items:center;gap:8px}
+.how em{font-style:normal;width:26px;height:26px;border-radius:50%;background:var(--soft);color:var(--ink);font-weight:700;display:grid;place-items:center;font-size:.9em}
+.how .arr{opacity:.5}
+.homefoot{display:flex;gap:12px;flex-wrap:wrap;align-items:stretch;margin-top:auto}
+.mine{flex:1 1 260px;display:flex;align-items:center;gap:14px;border:2px solid var(--line);background:var(--soft);border-radius:16px;padding:12px 18px;text-align:left;font-size:.85em}
+.mine b{display:block;font-size:1.05em}
+.mine span{color:var(--muted)}
+.mine .ic{flex:none;color:var(--accent)}
 .sosline{display:flex;justify-content:space-between;align-items:center;gap:12px;color:var(--danger);font-size:.85em;font-weight:600;background:var(--danger-soft);padding:12px 18px;border-radius:14px}
 .sosline b{font-size:1.3em}
 
@@ -323,17 +341,26 @@ function progress(){const ai={flags:1,areas:2,details:3,person:4,result:5,slots:
 const V={};
 const backBtn='<button class="btn ghost" data-act="back">'+icon('back',22)+'Буцах</button>';
 
-V.home=()=>({body:`
-  <div><h1 class="q">Сайн байна уу</h1><p class="sub">Доорхоос нэгийг сонгоно уу</p></div>
-  <div class="homegrid">
-    <button class="homecard main" data-act="start-ai"><span class="ic">${icon('search',30)}</span>
-      <div><b>Аль эмчид үзүүлэхээ мэдэхгүй байна</b><span>Зовиураа хэлбэл тохирох эмчийг олж өгнө</span></div></button>
-    <button class="homecard" data-act="start-direct"><span class="ic">${icon('cal',28)}</span>
-      <div><b>Эмчээ мэдэж байна</b><span>Шууд цаг авах</span></div></button>
-    <button class="homecard" data-act="mybook"><span class="ic">${icon('ticket',28)}</span>
-      <div><b>Миний цаг</b><span>${S.bookings.length?S.bookings.length+' цаг авсан байна':'Авсан цагаа харах'}</span></div></button>
+V.home=()=>({cls:'home',body:`
+  <div class="hello"><p class="step">${S.mode==='kiosk'?'Эмчид үзүүлэх цаг авах · Дэлгэцэн дээр хуруугаараа дарна уу':'Эмчид үзүүлэх цаг авах'}</p>
+    <h1 class="q">Та аль эмчид үзүүлэхээ мэдэх үү?</h1>
+    ${S.mode==='kiosk'?'<p class="sub">Ойлгомжгүй бол дээд буланд байгаа “Тусламж” товчийг дарвал ажилтан ирнэ.</p>':''}</div>
+  <div class="answers">
+    <button class="answer main" data-act="start-ai"><span class="pick">Эргэлзэж байвал үүнийг дарна уу</span>
+      <span class="say">ҮГҮЙ</span><b>Мэдэхгүй байна</b>
+      <span class="what">Хаана өвдөж байгааг тань асуугаад, аль эмчид үзүүлэхийг хэлж өгнө.</span>
+      <span class="go">Зовиураа хэлэх <i>${icon('back',22).replace('<svg','<svg style="transform:scaleX(-1)"')}</i></span></button>
+    <button class="answer" data-act="start-direct">
+      <span class="say">ТИЙМ</span><b>Мэдэж байна</b>
+      <span class="what">Тасаг, эмчээ жагсаалтаас сонгоод шууд цаг авна.</span>
+      <span class="go">Эмчээ сонгох <i>${icon('back',22).replace('<svg','<svg style="transform:scaleX(-1)"')}</i></span></button>
   </div>
-  <div class="sosline"><span>Амь насанд аюултай бол яаралтай тусламж руу шууд очно уу</span><b>103</b></div>`,foot:null});
+  <div class="how" aria-label="Хэрхэн ажилладаг вэ"><span><em>1</em>Сонголтоо хийнэ</span><span class="arr">→</span><span><em>2</em>Сул цагаа сонгоно</span><span class="arr">→</span><span><em>3</em>${S.mode==='kiosk'?'Талонгоо авна':'Баталгаажуулалт авна'}</span></div>
+  <div class="homefoot">
+    <button class="mine" data-act="mybook"><span class="ic">${icon('ticket',28)}</span>
+      <span><b>Өмнө нь цаг авсан уу?</b><span>${S.bookings.length?S.bookings.length+' цаг байна · харах, цуцлах':'Авсан цагаа харах, цуцлах'}</span></span></button>
+    <div class="sosline" style="flex:1 1 260px"><span>Амь насанд аюултай бол цаг авалгүй яаралтай тусламж руу очно уу</span><b>103</b></div>
+  </div>`,foot:null});
 
 V.flags=()=>({body:`
   <div><p class="step">Алхам 1 / 7</p><h1 class="q">Танд одоо эдгээрийн аль нэг байна уу?</h1><p class="sub">Байвал дээр нь дарна уу</p></div>
@@ -468,7 +495,7 @@ function render(){
       <div class="dhead">${S.screen!=='home'?`<button class="iconback" data-act="back" aria-label="Буцах">${icon('back',24)}</button>`:''}<span class="name">${S.screen==='home'?'Демо эмнэлэг':'Цаг авах'}</span>${S.screen!=='home'?'<button class="help" data-act="home">Эхлэл</button>':''}</div>`;
   st.innerHTML=`<div class="device ${S.mode}">${head}
     ${pr?`<div class="progress"><i style="width:${pr[0]/pr[1]*100}%"></i></div>`:''}
-    <section class="content" id="content">${v.body}</section>
+    <section class="content ${v.cls||''}" id="content">${v.body}</section>
     ${v.foot?`<div class="foot">${v.foot}</div>`:''}</div>`;
   if(S.screen==='ticket'&&S.mode==='kiosk'){let s=30;const tick=()=>{const c=$('#cd');if(c)c.textContent=s+' секундын дараа эхлэл рүү буцна.';if(s--<=0)home()};tick();timer=setInterval(tick,1000)}
   if(S.helpMsg){S.helpMsg=false;const c=$('#content');c.insertAdjacentHTML('afterbegin','<div class="okmsg">Ажилтан тан руу ирж байна (прототипт дүрслэл)</div>')}
