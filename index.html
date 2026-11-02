@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&display=swap">
 <style>
-/* Layout: one question per screen. Device = header, scrolling content, fixed footer with Back / main action. */
+/* Layout: one question per screen. Device = header, progress, scrolling content, fixed footer. Minimal text. */
 :root{
   --bg:#eef1f4; --surface:#ffffff; --soft:#f4f6f8; --ink:#16202a; --muted:#5e6c78; --line:#dde3e9;
   --accent:#1b63b5; --accent-ink:#ffffff; --accent-soft:#e7f0fa;
@@ -38,7 +38,6 @@ h1,h2,p{margin:0}
 h1{text-wrap:balance}
 svg{display:block}
 
-/* Presenter top bar (outside the device) */
 .top{max-width:1000px;margin:0 auto 16px;display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between}
 .brand{font-weight:700;font-size:18px}
 .brand span{color:var(--accent)}
@@ -48,7 +47,6 @@ svg{display:block}
 .modes button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
 .stage{display:flex;justify-content:center}
 
-/* Device shells */
 .device{background:var(--surface);display:flex;flex-direction:column;width:100%;overflow:hidden;box-shadow:0 20px 50px -30px rgba(10,30,50,.5)}
 .device.kiosk{max-width:1000px;height:680px;border:16px solid var(--frame);border-radius:24px;font-size:20px}
 .device.phone{max-width:390px;height:780px;border:10px solid var(--frame);border-radius:42px;font-size:16px}
@@ -64,16 +62,15 @@ svg{display:block}
 .phonebar{display:flex;justify-content:space-between;padding:8px 24px 2px;font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;flex:none}
 .iconback{border:0;background:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;margin-left:-6px}
 .iconback:hover{background:var(--soft)}
-
 .progress{height:6px;background:var(--line);flex:none}
 .progress i{display:block;height:100%;background:var(--accent);transition:width .3s}
 
 .content{flex:1;overflow-y:auto;padding:32px 40px;display:flex;flex-direction:column;gap:24px;min-height:0}
 .device.phone .content{padding:22px 18px}
-.step{font-size:.75em;font-weight:600;color:var(--accent);letter-spacing:.02em}
 .q{font-size:1.65em;font-weight:700;line-height:1.2;letter-spacing:-.01em}
 .device.phone .q{font-size:1.45em}
-.sub{color:var(--muted);font-size:.9em;margin-top:6px;max-width:52ch}
+.q2{font-size:1.25em;font-weight:700}
+.sub{color:var(--muted);font-size:.9em;margin-top:6px}
 
 .foot{flex:none;display:flex;gap:12px;padding:16px 22px;border-top:1px solid var(--line);background:var(--surface)}
 .device.phone .foot{padding:12px 14px 16px}
@@ -83,8 +80,10 @@ svg{display:block}
 .btn.ghost{background:var(--soft);color:var(--ink)}
 .btn.danger{background:var(--danger);color:#fff}
 .btn.grow{flex:1}
+.btn.sm{min-height:50px;padding:0 16px;font-size:.88em}
+.device.phone .btn.sm{min-height:46px}
 
-/* Big option buttons */
+/* Options */
 .opts{display:grid;gap:14px}
 .device.kiosk .opts.two{grid-template-columns:1fr 1fr}
 .device.kiosk .opts.three{grid-template-columns:repeat(3,1fr)}
@@ -98,74 +97,51 @@ svg{display:block}
   background:var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5 9-10'/%3E%3C/svg%3E") center/14px no-repeat}
 .opt .ic{flex:none;width:44px;height:44px;border-radius:12px;background:var(--soft);color:var(--accent);display:grid;place-items:center}
 .opt[aria-pressed="true"] .ic{background:var(--surface)}
-.opt .txt{display:flex;flex-direction:column;gap:2px;min-width:0}
-.opt .txt small{font-weight:400;color:var(--muted);font-size:.78em}
 .opt.center{justify-content:center;text-align:center}
 .tile{flex-direction:column;align-items:flex-start;justify-content:space-between;min-height:130px}
 .device.phone .tile{min-height:104px}
 
-/* Home: one yes/no question, two answer cards, how-it-works strip */
-.content.home{gap:20px}
-.device.kiosk .content.home{padding:28px 40px 22px}
-.hello{display:flex;flex-direction:column;gap:6px}
-.hello .q{font-size:1.75em}
-.device.phone .hello .q{font-size:1.5em}
-.answers{display:grid;gap:16px}
-.device.kiosk .answers{grid-template-columns:1fr 1fr}
-.answer{position:relative;border:2px solid var(--line);background:var(--surface);border-radius:22px;padding:24px;text-align:left;display:flex;flex-direction:column;gap:12px;min-height:220px;transition:border-color .12s,transform .12s}
-.device.phone .answer{min-height:0;padding:20px;border-radius:18px}
-.answer:hover{border-color:var(--accent)}
-.answer:active{transform:scale(.99)}
-.answer .say{font-size:.75em;font-weight:700;color:var(--muted);letter-spacing:.02em}
-.answer b{font-size:1.45em;line-height:1.2}
-.answer .what{color:var(--muted);font-size:.9em;flex:1}
-.answer .go{display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:700;color:var(--accent);border-top:1px solid var(--line);padding-top:14px}
-.answer .go i{width:44px;height:44px;border-radius:50%;background:var(--accent-soft);display:grid;place-items:center;font-style:normal}
-.answer.main{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-.answer.main .say,.answer.main .what{color:inherit;opacity:.85}
-.answer.main .go{color:inherit;border-top-color:rgba(255,255,255,.3)}
-.answer.main .go i{background:var(--surface);color:var(--accent)}
-.pick{position:absolute;top:-13px;left:22px;background:#f5b400;color:#1d1600;font-size:.7em;font-weight:700;padding:5px 12px;border-radius:999px}
-.how{display:flex;gap:10px;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:.8em}
-.how span{display:inline-flex;align-items:center;gap:8px}
-.how em{font-style:normal;width:26px;height:26px;border-radius:50%;background:var(--soft);color:var(--ink);font-weight:700;display:grid;place-items:center;font-size:.9em}
-.how .arr{opacity:.5}
-.homefoot{display:flex;gap:12px;flex-wrap:wrap;align-items:stretch;margin-top:auto}
-.mine{flex:1 1 260px;display:flex;align-items:center;gap:14px;border:2px solid var(--line);background:var(--soft);border-radius:16px;padding:12px 18px;text-align:left;font-size:.85em}
-.mine b{display:block;font-size:1.05em}
-.mine span{color:var(--muted)}
-.mine .ic{flex:none;color:var(--accent)}
-.sosline{display:flex;justify-content:space-between;align-items:center;gap:12px;color:var(--danger);font-size:.85em;font-weight:600;background:var(--danger-soft);padding:12px 18px;border-radius:14px}
-.sosline b{font-size:1.3em}
+/* Home: three big doors */
+.doors{display:grid;gap:16px;flex:1}
+.device.kiosk .doors{grid-template-columns:repeat(3,1fr)}
+.door{border:2px solid var(--line);background:var(--surface);border-radius:24px;padding:26px;text-align:left;display:flex;flex-direction:column;justify-content:space-between;gap:18px;transition:border-color .12s,transform .12s}
+.door:hover{border-color:var(--accent)}
+.door:active{transform:scale(.99)}
+.door .ic{width:64px;height:64px;border-radius:18px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center}
+.door b{font-size:1.35em;line-height:1.2;display:block}
+.door span{color:var(--muted);font-size:.85em}
+.door.main{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.door.main .ic{background:rgba(255,255,255,.18);color:inherit}
+.door.main span{color:inherit;opacity:.85}
+.device.phone .door{flex-direction:row;align-items:center;justify-content:flex-start;padding:18px;border-radius:18px}
+.device.phone .door .ic{flex:none;width:52px;height:52px}
+.device.phone .door b{font-size:1.15em}
+.minelink{align-self:center;border:0;background:none;color:var(--muted);font-weight:600;display:inline-flex;align-items:center;gap:8px;padding:8px}
 
-/* Red-flag rows */
-.flag{border-color:var(--line)}
-.flag .ic{background:var(--danger-soft);color:var(--danger)}
-.flag:hover{border-color:var(--danger)}
-
-/* Result */
-.rec{background:var(--accent-soft);border-radius:20px;padding:22px 24px;display:flex;flex-direction:column;gap:6px}
-.rec .lbl{font-size:.8em;color:var(--muted);font-weight:600}
-.rec .dept{font-size:1.5em;font-weight:700;line-height:1.2}
-.rec .where{font-weight:600;color:var(--accent)}
-.rec p{font-size:.9em;margin-top:6px}
-.badge{align-self:flex-start;font-size:.72em;font-weight:700;padding:4px 10px;border-radius:999px;background:var(--ok-soft);color:var(--ok)}
-.badge.soon{background:#fff3e0;color:#b45309}
-:root[data-theme="dark"] .badge.soon{background:#3a2a10;color:#f0b35a}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .badge.soon{background:#3a2a10;color:#f0b35a}}
+/* Plan cards (one per department) */
+.plans{display:flex;flex-direction:column;gap:16px}
+.plan{border:2px solid var(--line);border-radius:20px;overflow:hidden}
+.plan.done{border-color:var(--ok)}
+.plan .ph{display:flex;align-items:center;gap:14px;padding:16px 20px;background:var(--soft)}
+.plan.done .ph{background:var(--ok-soft)}
+.plan .ph .t{flex:1;min-width:0}
+.plan .ph b{display:block;font-size:1.1em}
+.plan .ph .t>span{color:var(--muted);font-size:.82em}
+.plan .num{flex:none;width:34px;height:34px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:700;font-size:.9em}
+.plan.done .num{background:var(--ok)}
+.plan .pb{padding:8px 20px 14px;display:flex;flex-direction:column}
+.drow{display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.drow:last-child{border-bottom:0}
+.av{flex:none;width:46px;height:46px;border-radius:50%;background:var(--soft);color:var(--accent);display:grid;place-items:center;font-weight:700;font-size:.9em}
+.drow .info{flex:1 1 140px;min-width:0;font-weight:600}
+.drow .acts{display:flex;gap:8px}
+.device.phone .drow .acts{flex:1 1 100%}
+.device.phone .drow .acts .btn{flex:1}
+.picked{display:flex;align-items:center;gap:12px;padding:12px 0;font-weight:600;flex-wrap:wrap}
+.picked .t{flex:1;min-width:0}
+.picked .t span{display:block;font-weight:400;color:var(--muted);font-size:.85em}
 .fine{font-size:.75em;color:var(--muted)}
-
-.docrow{border:2px solid var(--line);border-radius:18px;padding:16px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.device.phone .docrow{border-radius:14px;padding:14px}
-.av{flex:none;width:52px;height:52px;border-radius:50%;background:var(--soft);color:var(--accent);display:grid;place-items:center;font-weight:700}
-.docrow .info{flex:1 1 180px;min-width:0}
-.docrow .info b{display:block}
-.docrow .info span{color:var(--muted);font-size:.82em}
-.docrow .acts{display:flex;gap:8px;flex-wrap:wrap}
-.device.phone .docrow .acts{flex:1 1 100%}
-.device.phone .docrow .acts .btn{flex:1}
-.btn.sm{min-height:52px;padding:0 18px;font-size:.88em}
-.device.phone .btn.sm{min-height:46px}
+.chipbadge{display:inline-block;font-size:.7em;font-weight:700;padding:3px 10px;border-radius:999px;background:#fff3e0;color:#b45309;margin-left:6px;vertical-align:2px}
 
 /* Slots */
 .days{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px}
@@ -180,37 +156,50 @@ svg{display:block}
 .time:hover{border-color:var(--accent);color:var(--accent)}
 .empty{color:var(--muted);padding:20px;border:2px dashed var(--line);border-radius:16px;text-align:center}
 
-/* Summary + identity */
-.sum{display:grid;grid-template-columns:auto 1fr;gap:10px 20px;background:var(--soft);border-radius:18px;padding:18px 22px}
-.sum dt{color:var(--muted)}
-.sum dd{margin:0;font-weight:600;min-width:0}
-.cardread{border:2px dashed var(--accent);border-radius:20px;padding:24px;display:flex;align-items:center;gap:22px;background:var(--accent-soft);text-align:left;width:100%}
-.cardread .ic{flex:none;width:72px;height:72px;border-radius:18px;background:var(--surface);color:var(--accent);display:grid;place-items:center}
-.cardread b{display:block;font-size:1.1em}
-.cardread span{color:var(--muted);font-size:.85em}
+/* Review list */
+.rlist{display:flex;flex-direction:column;gap:12px}
+.ritem{display:flex;align-items:center;gap:14px;border:2px solid var(--line);border-radius:18px;padding:14px 18px}
+.ritem .t{flex:1;min-width:0}
+.ritem b{display:block}
+.ritem .t>span{color:var(--muted);font-size:.85em}
+.xbtn{flex:none;border:0;background:var(--soft);width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:var(--muted)}
+.addmore{border:2px dashed var(--accent);background:var(--surface);color:var(--accent);border-radius:18px;min-height:68px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px}
+
+/* Identity: two equal choices */
+.idopts{display:grid;gap:16px}
+.device.kiosk .idopts{grid-template-columns:1fr 1fr}
+.idopt{border:2px solid var(--line);background:var(--surface);border-radius:22px;padding:28px 22px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;min-height:220px;font-weight:700;font-size:1.1em}
+.device.phone .idopt{min-height:0;flex-direction:row;justify-content:flex-start;text-align:left;padding:18px;border-radius:18px}
+.idopt:hover{border-color:var(--accent)}
+.idopt[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.idopt .ic{width:84px;height:84px;border-radius:22px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center}
+.device.phone .idopt .ic{flex:none;width:52px;height:52px;border-radius:14px}
+.idopt[aria-pressed="true"] .ic{background:var(--surface)}
 .field{display:flex;flex-direction:column;gap:8px;font-weight:600}
-.field small{font-weight:400;color:var(--muted)}
 .field input,textarea{border:2px solid var(--line);background:var(--surface);border-radius:14px;padding:14px 16px;min-height:60px;font-size:1.05em;width:100%}
 .field input:focus,textarea:focus{border-color:var(--accent);outline:none}
-textarea{min-height:100px;resize:vertical;font-size:.95em}
+textarea{min-height:90px;resize:vertical;font-size:.95em}
+.row{display:flex;gap:14px;flex-wrap:wrap}
+.row>*{flex:1 1 200px;min-width:0}
 .err{color:var(--danger);font-weight:600;font-size:.88em}
-.linkish{border:0;background:none;padding:0;color:var(--accent);font-weight:600;text-decoration:underline;text-underline-offset:4px;align-self:flex-start}
+.linkish{border:0;background:none;padding:0;color:var(--accent);font-weight:600;align-self:flex-start}
 
 /* Waiting, emergency, ticket */
 .mid{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px}
 .spin{width:64px;height:64px;border-radius:50%;border:6px solid var(--accent-soft);border-top-color:var(--accent);animation:sp 1s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.spin{animation-duration:3s}}
-.emerg{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;background:var(--danger-soft);border-radius:22px;padding:28px}
+.emerg{flex:1;display:flex;flex-direction:column;justify-content:center;gap:16px;background:var(--danger-soft);border-radius:22px;padding:28px}
 .emerg .q{color:var(--danger)}
 .emerg .num{font-size:3em;font-weight:700;color:var(--danger);line-height:1}
-.okmsg{background:var(--ok-soft);color:var(--ok);font-weight:600;padding:12px 18px;border-radius:14px}
-.ticket{border:2px solid var(--line);border-radius:22px;padding:26px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px}
-.ticket .lbl{color:var(--muted);font-size:.85em;font-weight:600}
-.ticket .num{font-size:3.6em;font-weight:700;color:var(--accent);line-height:1;font-variant-numeric:tabular-nums;letter-spacing:.02em}
-.ticket .room{font-size:1.4em;font-weight:700}
-.ticket .when{font-size:1.05em}
-.ticket .doc{color:var(--muted);font-size:.9em}
+.okmsg{background:var(--ok-soft);color:var(--ok);font-weight:600;padding:12px 18px;border-radius:14px;display:flex;align-items:center;gap:8px}
+.tickets{display:grid;gap:14px}
+.device.kiosk .tickets.many{grid-template-columns:1fr 1fr}
+.ticket{border:2px solid var(--line);border-radius:22px;padding:22px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px}
+.ticket .num{font-size:3em;font-weight:700;color:var(--accent);line-height:1;font-variant-numeric:tabular-nums}
+.ticket .room{font-size:1.25em;font-weight:700}
+.ticket .when{font-weight:600}
+.ticket .doc{color:var(--muted);font-size:.85em}
 
 /* Staff board */
 .board{width:100%;max-width:1000px;display:flex;flex-direction:column;gap:16px}
@@ -240,11 +229,11 @@ tr.sample td{color:var(--muted)}
 <script>
 /* ---------- Icons (24px line) ---------- */
 const P={
-  search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
   cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
   ticket:'<path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4z"/><path d="M14 5v14" stroke-dasharray="2 2"/>',
   back:'<path d="M15 5l-7 7 7 7"/>',
-  alert:'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/>',
+  shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
+  pain:'<circle cx="12" cy="12" r="9"/><path d="M8 15s1.5-2 4-2 4 2 4 2M9 9h.01M15 9h.01"/>',
   head:'<circle cx="12" cy="9" r="6"/><path d="M9 15v5h6v-5"/>',
   eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
   ear:'<path d="M7 9a5 5 0 0 1 10 0c0 3-3 4-3 7a3 3 0 0 1-6 0"/><path d="M10 9a2 2 0 0 1 4 0"/>',
@@ -256,8 +245,13 @@ const P={
   drop:'<path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/>',
   temp:'<path d="M10 4a2 2 0 1 1 4 0v10a4 4 0 1 1-4 0z"/><path d="M12 9v7"/>',
   card:'<rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8" cy="12" r="2.5"/><path d="M13 10h5M13 14h3"/>',
+  keys:'<rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/>',
   phone:'<rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/>',
-  check:'<path d="M5 12l5 5 9-10"/>'
+  check:'<path d="M5 12l5 5 9-10"/>',
+  x:'<path d="M6 6l12 12M18 6L6 18"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  baby:'<circle cx="12" cy="8" r="4"/><path d="M6 21c0-4 2.7-7 6-7s6 3 6 7"/>',
+  woman:'<circle cx="12" cy="8" r="5"/><path d="M12 13v8M9 18h6"/>'
 };
 const icon=(k,s=26)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[k]}</svg>`;
 
@@ -275,23 +269,27 @@ const DEPTS=[
   {id:'shees',  name:'Бөөр, шээсний замын тасаг',L:'Б',room:'318',floor:3,desc:'Шээхэд өвдөх, бөөр, бэлхүүс'}
 ];
 const DOCTORS=[
-  ['dotor','Б. Оюунчимэг',14],['dotor','Г. Тэмүүлэн',6],['medrel','Д. Сарангэрэл',18],['medrel','Ц. Ганбат',9],
-  ['zurh','Н. Мөнхзул',21],['zurh','Ж. Батзориг',7],['chhh','Э. Номин',11],['chhh','С. Билгүүн',5],
-  ['nud','О. Ариунаа',16],['nud','Т. Энхболд',8],['arisi','Л. Цэцэгмаа',12],['arisi','П. Хүслэн',4],
-  ['gemtel','Б. Эрдэнэбат',19],['gemtel','Х. Анужин',6],['emegtei','Р. Солонго',15],['emegtei','М. Уянга',8],
-  ['huuhed','Ч. Нарантуяа',17],['huuhed','А. Төгөлдөр',5],['shees','Ү. Батбаяр',13],['shees','Ш. Мишээл',7]
-].map((d,i)=>({id:'dr'+i,dept:d[0],name:d[1],years:d[2]}));
+  ['dotor','Б. Оюунчимэг'],['dotor','Г. Тэмүүлэн'],['medrel','Д. Сарангэрэл'],['medrel','Ц. Ганбат'],
+  ['zurh','Н. Мөнхзул'],['zurh','Ж. Батзориг'],['chhh','Э. Номин'],['chhh','С. Билгүүн'],
+  ['nud','О. Ариунаа'],['nud','Т. Энхболд'],['arisi','Л. Цэцэгмаа'],['arisi','П. Хүслэн'],
+  ['gemtel','Б. Эрдэнэбат'],['gemtel','Х. Анужин'],['emegtei','Р. Солонго'],['emegtei','М. Уянга'],
+  ['huuhed','Ч. Нарантуяа'],['huuhed','А. Төгөлдөр'],['shees','Ү. Батбаяр'],['shees','Ш. Мишээл']
+].map((d,i)=>({id:'dr'+i,dept:d[0],name:d[1]}));
 const AREAS=[
   ['head','Толгой','medrel','head'],['eye','Нүд','nud','eye'],['ent','Чих, хамар, хоолой','chhh','ear'],
   ['chest','Цээж, зүрх','zurh','heart'],['belly','Хэвлий, ходоод','dotor','belly'],['back','Нуруу, бэлхүүс','gemtel','spine'],
   ['limbs','Гар, хөл, үе','gemtel','bone'],['skin','Арьс','arisi','skin'],['uro','Шээс, бэлгийн эрхтэн','shees','drop'],
-  ['general','Бүх бие (халуурах, ядрах)','dotor','temp']
+  ['general','Бүх бие, халуурах','dotor','temp']
 ];
-const FLAGS=['Цээж хүчтэй өвдөж байна','Амьсгал давчдаж байна','Нүүр мурийж, гар хөл саажиж байна','Их цус алдаж байна','Ухаан алдсан, таталт өгсөн','Гэнэт маш хүчтэй толгой өвдөж байна'];
+/* Preventive check-ups people come for without any complaint */
+const CHECKUPS=[
+  ['dotor','Ерөнхий үзлэг','shield'],['zurh','Зүрх, даралт','heart'],['nud','Нүд, хараа','eye'],
+  ['emegtei','Эмэгтэйчүүдийн үзлэг','woman'],['huuhed','Хүүхдийн үзлэг','baby'],['arisi','Арьс, мэнгэ','skin']
+];
 const FLAG_WORDS=['ухаан ал','таталт','саажи','нүүр мурий','амьсгал давч','амьсгал боогд','цус их','их цус','цээж хүчтэй'];
 const DURATIONS=['Өнөөдөр','2–3 хоног','1 долоо хоног','1 сараас дээш'];
-const SEVERITY=[['Бага',3,'Тэвчиж болно'],['Дунд',6,'Ажилд саад болж байна'],['Хүчтэй',9,'Тэвчихэд хэцүү']];
-const AGES=[['0–15 нас',10],['16–39 нас',30],['40–59 нас',50],['60 ба түүнээс дээш',68]];
+const SEVERITY=[['Бага',3],['Дунд',6],['Хүчтэй',9]];
+const AGES=[['0–15',10],['16–39',30],['40–59',50],['60+',68]];
 const KW=[
   ['medrel',['толгой','эргэ','мэдээ ал','нойр']],['zurh',['зүрх','дэлс','даралт','хаван']],
   ['chhh',['чих','хоолой','хамар','залгих']],['nud',['нүд','хараа']],['arisi',['арьс','тууралт','загат','батга','харшил']],
@@ -306,178 +304,165 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const hash=s=>{let h=2166136261;for(const ch of s){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0};
 const ini=n=>n.replace(/^[^.]+\.\s*/,'').slice(0,2);
 const $=s=>document.querySelector(s);
+const where=d=>`${d.room} тоот · ${d.floor} давхар`;
 
-const DAYS=(()=>{const out=[],d=new Date();d.setHours(0,0,0,0);const t=new Date();
-  while(out.length<5){if(d.getDay()!==0){const i=out.length,diff=Math.round((d-new Date(t.toDateString()))/864e5);
+const DAYS=(()=>{const out=[],d=new Date();d.setHours(0,0,0,0);const t0=new Date(new Date().toDateString());
+  while(out.length<5){if(d.getDay()!==0){const diff=Math.round((d-t0)/864e5);
     out.push({key:d.toISOString().slice(0,10),label:diff===0?'Өнөөдөр':diff===1?'Маргааш':WD[d.getDay()],
-      md:(d.getMonth()+1)+'-р сарын '+d.getDate(),short:String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0'),today:diff===0})}
+      short:String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0'),today:diff===0})}
     d.setDate(d.getDate()+1)}return out})();
+const dayOf=k=>DAYS.find(x=>x.key===k)||{label:k,short:k};
 
 /* ---------- State ---------- */
 const blankForm=()=>({areas:[],duration:'',severity:0,age:0,sex:'',text:'',showText:false});
-const S={mode:'kiosk',screen:'home',hist:[],path:null,deptId:null,doctorId:null,dayIdx:0,slot:null,
-  form:blankForm(),triage:null,patient:{rd:'',phone:''},manualId:false,bookings:[],lastId:null,staffCalled:false,cancelArm:null};
+const S={mode:'kiosk',screen:'home',hist:[],flow:null,plan:[],picks:[],deptId:null,doctorId:null,dayIdx:0,
+  form:blankForm(),triageSource:null,urgency:'routine',idMethod:null,patient:{rd:'',phone:''},bookings:[],lastGroup:null,staffCalled:false,cancelArm:null};
 try{const b=JSON.parse(localStorage.getItem('zuvemch.bookings')||'[]');if(Array.isArray(b))S.bookings=b}catch(e){}
 const save=()=>{try{localStorage.setItem('zuvemch.bookings',JSON.stringify(S.bookings))}catch(e){}};
 
+/* A slot is unavailable if booked, in the past, or clashes with another visit this patient has picked */
 function isTaken(docId,dayKey,time){
   if(S.bookings.some(b=>b.doctorId===docId&&b.day===dayKey&&b.time===time))return true;
-  const day=DAYS.find(d=>d.key===dayKey);
-  if(day&&day.today){const [h,m]=time.split(':').map(Number),n=new Date();if(h*60+m<=n.getHours()*60+n.getMinutes()+15)return true}
+  const dp=doctor(docId).dept;
+  if(S.picks.some(p=>p.dept!==dp&&p.day===dayKey&&p.time===time))return true;
+  const day=dayOf(dayKey);
+  if(day.today){const [h,m]=time.split(':').map(Number),n=new Date();if(h*60+m<=n.getHours()*60+n.getMinutes()+15)return true}
   return hash(docId+dayKey+time)%10<4}
 function firstFree(docId){for(const d of DAYS)for(const t of TIMES)if(!isTaken(docId,d.key,t))return {day:d,time:t};return null}
+const pickFor=deptId=>S.picks.find(p=>p.dept===deptId);
+function addPick(docId,day,time){const dp=doctor(docId).dept;S.picks=S.picks.filter(p=>p.dept!==dp);S.picks.push({dept:dp,doctorId:docId,day,time})}
 
 /* ---------- Navigation ---------- */
 function go(s){S.hist.push(S.screen);S.screen=s;render()}
 function back(){S.screen=S.hist.pop()||'home';render()}
-function home(){Object.assign(S,{hist:[],screen:'home',path:null,triage:null,staffCalled:false,manualId:false,form:blankForm(),patient:{rd:'',phone:''}});render()}
-
-/* Progress: [step, total] per screen and path */
-function progress(){const ai={flags:1,areas:2,details:3,person:4,result:5,slots:6,identity:7},dir={depts:1,doctors:2,slots:3,identity:4};
-  if(S.path==='ai'&&ai[S.screen])return [ai[S.screen],7];
-  if(S.path==='direct'&&dir[S.screen])return [dir[S.screen],4];return null}
+function home(){Object.assign(S,{hist:[],screen:'home',flow:null,plan:[],picks:[],staffCalled:false,idMethod:null,form:blankForm(),patient:{rd:'',phone:''},urgency:'routine'});render()}
+function progress(){const m={ai:['areas','details','person','plan','review','identity'],check:['plan','review','identity'],direct:['depts','doctors','slots','review','identity']}[S.flow];
+  if(!m)return null;let i=m.indexOf(S.screen);if(S.screen==='slots'&&i<0)i=m.indexOf('plan');return i<0?null:(i+1)/m.length}
 
 /* ---------- Screens: each returns {body, foot} ---------- */
 const V={};
 const backBtn='<button class="btn ghost" data-act="back">'+icon('back',22)+'Буцах</button>';
 
-V.home=()=>({cls:'home',body:`
-  <div class="hello"><p class="step">${S.mode==='kiosk'?'Эмчид үзүүлэх цаг авах · Дэлгэцэн дээр хуруугаараа дарна уу':'Эмчид үзүүлэх цаг авах'}</p>
-    <h1 class="q">Та аль эмчид үзүүлэхээ мэдэх үү?</h1>
-    ${S.mode==='kiosk'?'<p class="sub">Ойлгомжгүй бол дээд буланд байгаа “Тусламж” товчийг дарвал ажилтан ирнэ.</p>':''}</div>
-  <div class="answers">
-    <button class="answer main" data-act="start-ai"><span class="pick">Эргэлзэж байвал үүнийг дарна уу</span>
-      <span class="say">ҮГҮЙ</span><b>Мэдэхгүй байна</b>
-      <span class="what">Хаана өвдөж байгааг тань асуугаад, аль эмчид үзүүлэхийг хэлж өгнө.</span>
-      <span class="go">Зовиураа хэлэх <i>${icon('back',22).replace('<svg','<svg style="transform:scaleX(-1)"')}</i></span></button>
-    <button class="answer" data-act="start-direct">
-      <span class="say">ТИЙМ</span><b>Мэдэж байна</b>
-      <span class="what">Тасаг, эмчээ жагсаалтаас сонгоод шууд цаг авна.</span>
-      <span class="go">Эмчээ сонгох <i>${icon('back',22).replace('<svg','<svg style="transform:scaleX(-1)"')}</i></span></button>
+V.home=()=>({body:`
+  <h1 class="q">Юуны учир ирсэн бэ?</h1>
+  <div class="doors">
+    <button class="door main" data-act="start-ai"><span class="ic">${icon('pain',34)}</span><div><b>Зовиуртай байна</b><span>Тохирох эмчийг олж өгнө</span></div></button>
+    <button class="door" data-act="start-check"><span class="ic">${icon('shield',32)}</span><div><b>Урьдчилан сэргийлэх үзлэг</b><span>Зовиургүй</span></div></button>
+    <button class="door" data-act="start-direct"><span class="ic">${icon('cal',32)}</span><div><b>Эмчээ мэдэж байна</b><span>Шууд цаг авах</span></div></button>
   </div>
-  <div class="how" aria-label="Хэрхэн ажилладаг вэ"><span><em>1</em>Сонголтоо хийнэ</span><span class="arr">→</span><span><em>2</em>Сул цагаа сонгоно</span><span class="arr">→</span><span><em>3</em>${S.mode==='kiosk'?'Талонгоо авна':'Баталгаажуулалт авна'}</span></div>
-  <div class="homefoot">
-    <button class="mine" data-act="mybook"><span class="ic">${icon('ticket',28)}</span>
-      <span><b>Өмнө нь цаг авсан уу?</b><span>${S.bookings.length?S.bookings.length+' цаг байна · харах, цуцлах':'Авсан цагаа харах, цуцлах'}</span></span></button>
-    <div class="sosline" style="flex:1 1 260px"><span>Амь насанд аюултай бол цаг авалгүй яаралтай тусламж руу очно уу</span><b>103</b></div>
-  </div>`,foot:null});
-
-V.flags=()=>({body:`
-  <div><p class="step">Алхам 1 / 7</p><h1 class="q">Танд одоо эдгээрийн аль нэг байна уу?</h1><p class="sub">Байвал дээр нь дарна уу</p></div>
-  <div class="opts two">${FLAGS.map((f,i)=>`<button class="opt flag" data-act="flag" data-i="${i}"><span class="ic">${icon('alert',22)}</span><span class="txt">${esc(f)}</span></button>`).join('')}</div>`,
-  foot:backBtn+'<button class="btn grow" data-act="noflag">Үгүй, эдгээр байхгүй</button>'});
+  <button class="minelink" data-act="mybook">${icon('ticket',20)}Миний цаг${S.bookings.length?' ('+S.bookings.length+')':''}</button>`,foot:null});
 
 V.areas=()=>({body:`
-  <div><p class="step">Алхам 2 / 7</p><h1 class="q">Хаана тань өвдөж, зовоож байна вэ?</h1><p class="sub">Нэгээс олныг сонгож болно</p></div>
-  <div class="opts ${S.mode==='kiosk'?'four':'four'}">${AREAS.map(([k,t,,ic])=>`<button class="opt tile" data-act="area" data-k="${k}" aria-pressed="${S.form.areas.includes(k)}"><span class="ic">${icon(ic)}</span><span class="txt">${esc(t)}</span></button>`).join('')}</div>`,
+  <div><h1 class="q">Хаана тань өвдөж байна вэ?</h1><p class="sub">Хэд хэдэн газар бол бүгдийг нь сонгоно уу</p></div>
+  <div class="opts four">${AREAS.map(([k,t,,ic])=>`<button class="opt tile" data-act="area" data-k="${k}" aria-pressed="${S.form.areas.includes(k)}"><span class="ic">${icon(ic)}</span><span>${esc(t)}</span></button>`).join('')}</div>`,
   foot:backBtn+`<button class="btn grow" data-act="to-details" ${S.form.areas.length?'':'disabled'}>Үргэлжлүүлэх</button>`});
 
 V.details=()=>{const f=S.form;return {body:`
-  <div><p class="step">Алхам 3 / 7</p><h1 class="q">Хэзээнээс эхэлсэн бэ?</h1></div>
+  <h1 class="q">Хэзээнээс эхэлсэн бэ?</h1>
   <div class="opts four">${DURATIONS.map(d=>`<button class="opt center" data-act="dur" data-k="${d}" aria-pressed="${f.duration===d}">${d}</button>`).join('')}</div>
-  <h2 class="q" style="font-size:1.3em">Хэр хүчтэй вэ?</h2>
-  <div class="opts three">${SEVERITY.map(([t,v,s])=>`<button class="opt" data-act="sev" data-v="${v}" aria-pressed="${f.severity===v}"><span class="txt">${t}<small>${s}</small></span></button>`).join('')}</div>
-  ${f.showText?`<label class="field" for="sx-text">Нэмж хэлэх зүйл <small>Заавал биш</small>
-     <textarea id="sx-text" data-field="text" placeholder="Жишээ: 3 хоног толгой өвдөөд нүд бүрэлзэж байна">${esc(f.text)}</textarea></label>`
-   :`<button class="linkish" data-act="show-text">+ Нэмж тайлбар бичих (заавал биш)</button>`}`,
+  <h2 class="q2">Хэр хүчтэй вэ?</h2>
+  <div class="opts three">${SEVERITY.map(([t,v])=>`<button class="opt center" data-act="sev" data-v="${v}" aria-pressed="${f.severity===v}">${t}</button>`).join('')}</div>
+  ${f.showText?`<label class="field" for="sx-text">Тайлбар<textarea id="sx-text" data-field="text" placeholder="Заавал биш">${esc(f.text)}</textarea></label>`
+   :`<button class="linkish" data-act="show-text">+ Тайлбар бичих</button>`}`,
   foot:backBtn+`<button class="btn grow" data-act="to-person" ${f.duration&&f.severity?'':'disabled'}>Үргэлжлүүлэх</button>`}};
 
 V.person=()=>{const f=S.form;return {body:`
-  <div><p class="step">Алхам 4 / 7</p><h1 class="q">Үзүүлэх хүний нас</h1></div>
+  <h1 class="q">Нас</h1>
   <div class="opts four">${AGES.map(([t,v])=>`<button class="opt center" data-act="age" data-v="${v}" aria-pressed="${f.age===v}">${t}</button>`).join('')}</div>
-  <h2 class="q" style="font-size:1.3em">Хүйс</h2>
+  <h2 class="q2">Хүйс</h2>
   <div class="opts two">${['Эрэгтэй','Эмэгтэй'].map(t=>`<button class="opt center" data-act="sex" data-k="${t}" aria-pressed="${f.sex===t}">${t}</button>`).join('')}</div>`,
   foot:backBtn+`<button class="btn grow" data-act="analyze" ${f.age&&f.sex?'':'disabled'}>Эмчээ олох</button>`}};
 
-V.analyzing=()=>({body:`<div class="mid"><div class="spin" aria-hidden="true"></div><h1 class="q">Тохирох эмчийг хайж байна</h1><p class="sub">Хэдэн секунд хүлээнэ үү</p></div>`,foot:null});
+V.analyzing=()=>({body:`<div class="mid"><div class="spin" aria-hidden="true"></div><h1 class="q">Хайж байна…</h1></div>`,foot:null});
 
-const docRows=(deptId)=>DOCTORS.filter(d=>d.dept===deptId).map(d=>{const f=firstFree(d.id);return `
-  <div class="docrow"><div class="av">${esc(ini(d.name))}</div>
-    <div class="info"><b>${esc(d.name)}</b><span>${d.years} жил ажилласан${f?' · Хамгийн ойр: '+f.day.label+' '+f.time:''}</span></div>
-    <div class="acts">${f?`<button class="btn sm" data-act="quick" data-doc="${d.id}" data-day="${f.day.key}" data-time="${f.time}">${f.day.label} ${f.time}</button>`:''}
-      <button class="btn sm ghost" data-act="pick-doc" data-id="${d.id}">Өөр цаг</button></div></div>`}).join('');
+/* One card per department: pick a doctor's nearest slot, or open all slots */
+function planCard(item,i){const d=dept(item.dept),p=pickFor(item.dept);
+  const body=p?`<div class="picked"><span class="t">${esc(doctor(p.doctorId).name)}<span>${dayOf(p.day).label} · ${p.time}</span></span>
+      <button class="btn sm ghost" data-act="unpick" data-dept="${d.id}">Солих</button></div>`
+    :DOCTORS.filter(x=>x.dept===d.id).map(x=>{const f=firstFree(x.id);return `<div class="drow"><div class="av">${esc(ini(x.name))}</div><div class="info">${esc(x.name)}</div>
+      <div class="acts">${f?`<button class="btn sm" data-act="quick" data-doc="${x.id}" data-day="${f.day.key}" data-time="${f.time}">${f.day.label} ${f.time}</button>`:''}
+      <button class="btn sm ghost" data-act="pick-doc" data-id="${x.id}">Өөр цаг</button></div></div>`}).join('');
+  return `<div class="plan ${p?'done':''}"><div class="ph"><span class="num">${p?icon('check',18):i+1}</span>
+    <span class="t"><b>${esc(item.label||d.name)}</b><span>${where(d)}</span></span></div><div class="pb">${body}</div></div>`}
 
-V.result=()=>{const t=S.triage,d=dept(t.department),alt=t.alternative&&dept(t.alternative);return {body:`
-  <div><p class="step">Алхам 5 / 7</p><h1 class="q">Танд дараах эмч тохирно</h1></div>
-  <div class="rec"><span class="lbl">Санал болгох тасаг</span><span class="dept">${esc(d.name)}</span>
-    <span class="where">${d.floor}-р давхар · ${d.room} тоот</span>
-    ${t.urgency==='soon'?'<span class="badge soon">1–2 хоногийн дотор үзүүлээрэй</span>':''}
-    <p>${esc(t.reason)}</p></div>
-  <div style="display:flex;flex-direction:column;gap:12px">${docRows(d.id)}</div>
-  ${alt?`<button class="linkish" data-act="alt">Өөр тасаг: ${esc(alt.name)}</button>`:''}
-  <p class="fine">Энэ бол онош биш. Эмч тань үзэж оношилно. ${t.source==='ai'?'AI-аар боловсруулсан.':'Дүрмийн горимоор боловсруулсан.'}</p>`,
-  foot:backBtn+'<button class="btn ghost grow" data-act="start-direct">Өөр тасаг сонгох</button>'}};
+V.plan=()=>{const n=S.plan.length,ok=S.picks.length;
+  const title=S.flow==='check'?'Ямар үзлэг хийлгэх вэ?':n>1?`Танд ${n} эмч хэрэгтэй`:'Танд тохирох эмч';
+  return {body:`
+  <div><h1 class="q">${title}${S.urgency==='soon'&&S.flow==='ai'?'<span class="chipbadge">Аль болох эрт</span>':''}</h1>
+    ${S.flow==='check'?'<p class="sub">Хэдийг ч сонгож болно</p>':''}</div>
+  <div class="plans">${S.plan.map(planCard).join('')}</div>
+  ${S.flow==='ai'?`<p class="fine">Энэ бол онош биш.${S.triageSource==='ai'?' AI-аар боловсруулсан.':''}</p>`:''}`,
+  foot:backBtn+`<button class="btn grow" data-act="to-review" ${ok?'':'disabled'}>Үргэлжлүүлэх${ok?' ('+ok+')':''}</button>`}};
 
 V.emergency=()=>({body:`
-  <div class="emerg"><h1 class="q">Цаг авах шаардлагагүй. Яаралтай тусламж руу шууд очно уу.</h1>
-    <p>1-р давхар, баруун талын орц. Ээлж хүлээхгүй.</p>
-    <p>Эмнэлгийн гадна байгаа бол:</p><span class="num">103</span>
-    ${S.staffCalled?'<div class="okmsg">Ажилтан тан руу ирж байна (прототипт дүрслэл)</div>':''}</div>`,
-  foot:(S.mode==='kiosk'?'<button class="btn danger grow" data-act="call-staff">Ажилтан дуудах</button>':'')+'<button class="btn ghost" data-act="back">Андуурч дарсан</button>'});
+  <div class="emerg"><h1 class="q">Яаралтай тусламж руу шууд очно уу</h1><p>1 давхар, баруун орц</p><span class="num">103</span>
+    ${S.staffCalled?'<div class="okmsg">Ажилтан ирж байна</div>':''}</div>`,
+  foot:(S.mode==='kiosk'?'<button class="btn danger grow" data-act="call-staff">Ажилтан дуудах</button>':'')+'<button class="btn ghost" data-act="back">Буцах</button>'});
 
 V.depts=()=>({body:`
-  <div><p class="step">Алхам 1 / 4</p><h1 class="q">Аль тасагт үзүүлэх вэ?</h1></div>
-  <div class="opts two">${DEPTS.map(d=>`<button class="opt" data-act="pick-dept" data-id="${d.id}"><span class="txt">${esc(d.name)}<small>${esc(d.desc)}</small></span></button>`).join('')}</div>`,
+  <h1 class="q">Аль тасагт?</h1>
+  <div class="opts two">${DEPTS.map(d=>`<button class="opt" data-act="pick-dept" data-id="${d.id}" ${pickFor(d.id)?'aria-pressed="true"':''}>${esc(d.name)}</button>`).join('')}</div>`,
   foot:backBtn});
 
 V.doctors=()=>{const d=dept(S.deptId);return {body:`
-  <div><p class="step">Алхам 2 / 4</p><h1 class="q">Эмчээ сонгоно уу</h1><p class="sub">${esc(d.name)} · ${d.floor}-р давхар, ${d.room} тоот</p></div>
-  <div style="display:flex;flex-direction:column;gap:12px">${docRows(d.id)}</div>`,foot:backBtn}};
+  <div><h1 class="q">Эмчээ сонгоно уу</h1><p class="sub">${esc(d.name)}</p></div>
+  <div class="plans">${planCard({dept:d.id},0).replace(/<div class="ph">[\s\S]*?<\/div><div class="pb">/,'<div class="pb">')}</div>`,foot:backBtn}};
 
-V.slots=()=>{const d=doctor(S.doctorId),day=DAYS[S.dayIdx],free=TIMES.filter(t=>!isTaken(d.id,day.key,t));const pr=progress();return {body:`
-  <div><p class="step">Алхам ${pr?pr[0]+' / '+pr[1]:''}</p><h1 class="q">Цагаа сонгоно уу</h1><p class="sub">${esc(d.name)} · ${esc(dept(d.dept).name)}</p></div>
+V.slots=()=>{const d=doctor(S.doctorId),day=DAYS[S.dayIdx],free=TIMES.filter(t=>!isTaken(d.id,day.key,t));return {body:`
+  <div><h1 class="q">Цагаа сонгоно уу</h1><p class="sub">${esc(d.name)} · ${esc(dept(d.dept).name)}</p></div>
   <div class="days">${DAYS.map((x,i)=>`<button class="day" data-act="day" data-i="${i}" aria-pressed="${i===S.dayIdx}"><b>${x.label}</b><span>${x.short}</span></button>`).join('')}</div>
-  ${free.length?`<div class="times">${free.map(t=>`<button class="time" data-act="time" data-time="${t}">${t}</button>`).join('')}</div>`
-   :'<div class="empty">Энэ өдөр сул цаг алга. Өөр өдөр сонгоно уу.</div>'}`,foot:backBtn}};
+  ${free.length?`<div class="times">${free.map(t=>`<button class="time" data-act="time" data-time="${t}">${t}</button>`).join('')}</div>`:'<div class="empty">Сул цаг алга</div>'}`,foot:backBtn}};
 
-V.identity=()=>{const d=doctor(S.doctorId),dp=dept(d.dept),day=DAYS.find(x=>x.key===S.slot.day),pr=progress();
-  const sum=`<dl class="sum"><dt>Эмч</dt><dd>${esc(d.name)}</dd><dt>Тасаг</dt><dd>${esc(dp.name)}</dd>
-    <dt>Цаг</dt><dd>${day.label}, ${day.md} · ${S.slot.time}</dd><dt>Өрөө</dt><dd>${dp.floor}-р давхар, ${dp.room} тоот</dd></dl>`;
-  const head=`<div><p class="step">Алхам ${pr?pr[0]+' / '+pr[1]:''}</p><h1 class="q">${S.mode==='kiosk'&&!S.manualId?'Картаа уншуулна уу':'Мэдээллээ оруулна уу'}</h1></div>`;
-  if(S.mode==='kiosk'&&!S.manualId)return {body:head+sum+`
-    <button class="cardread" data-act="read-card"><span class="ic">${icon('card',40)}</span>
-      <span><b>Иргэний үнэмлэх эсвэл ЭМД картаа уншигч дээр тавина уу</b><span>Прототип: энд дарж уншуулсан гэж үзнэ</span></span></button>
-    <button class="linkish" data-act="manual-id">Карт байхгүй бол регистрээр оруулах</button>`,foot:backBtn};
-  return {body:head+sum+`
-    ${S.mode==='phone'?`<button class="btn ghost" data-act="fill-sample">${icon('phone',20)}e-Mongolia-аар нэвтрэх (жишээ)</button>`:''}
+V.review=()=>{const list=S.picks.slice().sort((a,b)=>(a.day+a.time).localeCompare(b.day+b.time));return {body:`
+  <h1 class="q">Таны цаг${list.length>1?'ууд':''}</h1>
+  <div class="rlist">${list.map(p=>{const d=dept(p.dept);return `<div class="ritem"><span class="t"><b>${dayOf(p.day).label} · ${p.time}</b>
+    <span>${esc(d.name)} · ${esc(doctor(p.doctorId).name)} · ${where(d)}</span></span>
+    <button class="xbtn" data-act="remove" data-dept="${p.dept}" aria-label="Хасах">${icon('x',20)}</button></div>`}).join('')||'<div class="empty">Цаг сонгоогүй байна</div>'}</div>
+  <button class="addmore" data-act="add-more">${icon('plus',22)}Өөр тасагт цаг нэмэх</button>`,
+  foot:backBtn+`<button class="btn grow" data-act="to-identity" ${list.length?'':'disabled'}>Баталгаажуулах</button>`}};
+
+V.identity=()=>{const k=S.mode==='kiosk',m=S.idMethod;return {body:`
+  <h1 class="q">Хэрхэн баталгаажуулах вэ?</h1>
+  <div class="idopts">
+    <button class="idopt" data-act="id-card"><span class="ic">${icon(k?'card':'phone',k?44:28)}</span>${k?'Карт уншуулах':'e-Mongolia'}</button>
+    <button class="idopt" data-act="id-manual" aria-pressed="${m==='manual'}"><span class="ic">${icon('keys',k?44:28)}</span>Регистр оруулах</button>
+  </div>
+  ${m==='manual'?`<div class="row">
     <label class="field" for="pt-rd">Регистрийн дугаар<input id="pt-rd" type="text" data-pfield="rd" value="${esc(S.patient.rd)}" placeholder="АА00000000" autocomplete="off"></label>
-    ${S.mode==='phone'?`<label class="field" for="pt-ph">Утасны дугаар <small>Сануулга авах</small><input id="pt-ph" type="tel" inputmode="numeric" data-pfield="phone" value="${esc(S.patient.phone)}" placeholder="8 оронтой"></label>`:''}
-    <p class="err" id="ptErr" hidden></p>`,
-  foot:backBtn+'<button class="btn grow" data-act="confirm">Цаг авах</button>'}};
+    ${k?'':`<label class="field" for="pt-ph">Утас<input id="pt-ph" type="tel" inputmode="numeric" data-pfield="phone" value="${esc(S.patient.phone)}" placeholder="8 оронтой"></label>`}</div>
+    <p class="err" id="ptErr" hidden></p>`:''}
+  ${k&&m!=='manual'?'<p class="fine">Прототип: “Карт уншуулах” дээр дарвал уншсан гэж үзнэ.</p>':''}`,
+  foot:backBtn+(m==='manual'?'<button class="btn grow" data-act="confirm">Цаг авах</button>':'')}};
 
-V.ticket=()=>{const b=S.bookings.find(x=>x.id===S.lastId);if(!b)return V.home();const d=doctor(b.doctorId),dp=dept(d.dept),day=DAYS.find(x=>x.key===b.day)||{label:b.day,md:''};
+V.ticket=()=>{const list=S.bookings.filter(b=>b.group===S.lastGroup).sort((a,b)=>(a.day+a.time).localeCompare(b.day+b.time));if(!list.length)return V.home();
   return {body:`
-  <div class="okmsg">${icon('check',18).replace('<svg','<svg style="display:inline;vertical-align:-3px;margin-right:6px"')}Таны цаг баталгаажлаа</div>
-  <div class="ticket"><span class="lbl">Таны дугаар</span><span class="num">${esc(b.ticket)}</span>
-    <span class="room">${dp.room} тоот · ${dp.floor}-р давхар</span>
-    <span class="when">${day.label}, ${day.md} · <b>${b.time}</b></span>
-    <span class="doc">${esc(d.name)} · ${esc(dp.name)}</span></div>
-  <p class="sub" style="text-align:center;margin:0 auto">Цагаасаа 10 минутын өмнө өрөөний үүдэнд ирээрэй.</p>
-  ${S.mode==='kiosk'?'<p class="fine" style="text-align:center">Талон хэвлэгдэж байна (прототипт дүрслэл). <span id="cd"></span></p>'
-    :`<p class="fine" style="text-align:center">Бодит системд өмнөх өдөр нь ${esc(b.phone.slice(0,2))}••${esc(b.phone.slice(-2))} дугаарт SMS очно.</p>`}`,
+  <div class="okmsg">${icon('check',20)}Баталгаажлаа</div>
+  <div class="tickets ${list.length>1?'many':''}">${list.map(b=>{const d=doctor(b.doctorId),dp=dept(d.dept);return `
+    <div class="ticket"><span class="num">${esc(b.ticket)}</span><span class="room">${where(dp)}</span>
+      <span class="when">${dayOf(b.day).label} · ${b.time}</span><span class="doc">${esc(dp.name)} · ${esc(d.name)}</span></div>`}).join('')}</div>
+  <p class="fine" style="text-align:center">${S.mode==='kiosk'?'Талон хэвлэгдэж байна. <span id="cd"></span>':'Өмнөх өдөр нь SMS сануулга очно.'}</p>`,
   foot:'<button class="btn grow" data-act="home">Дуусгах</button>'}};
 
 V.mybook=()=>{const list=S.bookings.slice().sort((a,b)=>(a.day+a.time).localeCompare(b.day+b.time));return {body:`
-  <div><h1 class="q">Миний цаг</h1></div>
-  ${list.length?`<div style="display:flex;flex-direction:column;gap:12px">${list.map(b=>{const d=doctor(b.doctorId),dp=dept(d.dept),day=DAYS.find(x=>x.key===b.day);return `
-    <div class="docrow"><div class="av" style="font-size:.75em">${esc(b.ticket)}</div>
-      <div class="info"><b>${day?day.label:b.day} · ${b.time}</b><span>${esc(d.name)} · ${dp.room} тоот</span></div>
-      <div class="acts"><button class="btn sm ${S.cancelArm===b.id?'danger':'ghost'}" data-act="cancel" data-id="${b.id}">${S.cancelArm===b.id?'Тийм, цуцлах':'Цуцлах'}</button></div></div>`}).join('')}</div>`
-   :'<div class="empty">Одоогоор авсан цаг алга</div>'}`,foot:backBtn}};
+  <h1 class="q">Миний цаг</h1>
+  <div class="rlist">${list.map(b=>{const d=doctor(b.doctorId),dp=dept(d.dept);return `<div class="ritem"><span class="t"><b>${dayOf(b.day).label} · ${b.time} · ${esc(b.ticket)}</b>
+    <span>${esc(dp.name)} · ${where(dp)}</span></span>
+    <button class="btn sm ${S.cancelArm===b.id?'danger':'ghost'}" data-act="cancel" data-id="${b.id}">${S.cancelArm===b.id?'Тийм, цуцлах':'Цуцлах'}</button></div>`}).join('')||'<div class="empty">Цаг алга</div>'}</div>`,foot:backBtn}};
 
 /* ---------- Staff board ---------- */
-const SAMPLE=[['09:00','Д-001','dr0','Киоск','AI'],['09:30','М-001','dr2','Утас','AI'],['10:00','Г-001','dr12','Киоск','Шууд'],
-  ['10:30','Ч-001','dr6','Утас','AI'],['11:00','А-001','dr10','Киоск','AI'],['11:30','Э-001','dr14','Утас','Шууд']];
+const SAMPLE=[['09:00','Д-001','dr0','Киоск','Зовиур'],['09:30','М-001','dr2','Утас','Зовиур'],['10:00','Г-001','dr12','Киоск','Шууд'],
+  ['10:30','Н-001','dr8','Утас','Үзлэг'],['11:00','А-001','dr10','Киоск','Зовиур'],['11:30','З-001','dr4','Утас','Үзлэг']];
+const FLOWNAME={ai:'Зовиур',check:'Үзлэг',direct:'Шууд'};
 function board(){const rows=[...SAMPLE.map(r=>({time:r[0],ticket:r[1],doctorId:r[2],source:r[3],via:r[4],day:DAYS[0].key,sample:true})),
-    ...S.bookings.map(b=>({...b,via:b.triage?'AI':'Шууд'}))].sort((a,b)=>(a.day+a.time).localeCompare(b.day+b.time));
-  const ai=rows.filter(r=>r.via==='AI').length;
+    ...S.bookings.map(b=>({...b,via:FLOWNAME[b.flow]||'Шууд'}))].sort((a,b)=>(a.day+a.time).localeCompare(b.day+b.time));
+  const cnt=k=>rows.filter(r=>r.via===k).length;
   return `<div class="board"><div class="stats">
     <div class="stat"><div class="v">${rows.length}</div><div class="l">Нийт цаг</div></div>
-    <div class="stat"><div class="v">${Math.round(ai/rows.length*100)}%</div><div class="l">AI-аар чиглүүлсэн</div></div>
+    <div class="stat"><div class="v">${cnt('Зовиур')} / ${cnt('Үзлэг')} / ${cnt('Шууд')}</div><div class="l">Зовиур / Үзлэг / Шууд</div></div>
     <div class="stat"><div class="v">${rows.filter(r=>r.source==='Киоск').length} / ${rows.filter(r=>r.source==='Утас').length}</div><div class="l">Киоск / Утас</div></div>
     <div class="stat"><div class="v">${S.bookings.length}</div><div class="l">Энэ браузерт авсан</div></div></div>
-  <div class="tablewrap"><table><thead><tr><th>Өдөр, цаг</th><th>Дугаар</th><th>Эмч</th><th>Тасаг</th><th>Суваг</th><th>Чиглүүлэлт</th></tr></thead><tbody>
-  ${rows.map(r=>{const d=doctor(r.doctorId),day=DAYS.find(x=>x.key===r.day);return `<tr class="${r.sample?'sample':''}"><td class="n">${day?day.short:r.day} ${r.time}</td><td class="n">${esc(r.ticket)}</td>
+  <div class="tablewrap"><table><thead><tr><th>Өдөр, цаг</th><th>Дугаар</th><th>Эмч</th><th>Тасаг</th><th>Суваг</th><th>Шалтгаан</th></tr></thead><tbody>
+  ${rows.map(r=>{const d=doctor(r.doctorId);return `<tr class="${r.sample?'sample':''}"><td class="n">${dayOf(r.day).short} ${r.time}</td><td class="n">${esc(r.ticket)}</td>
     <td>${esc(d.name)}</td><td>${esc(dept(d.dept).name)}</td><td>${r.source}</td><td>${r.via}${r.sample?' · жишээ':''}</td></tr>`}).join('')}
   </tbody></table></div><p class="boardnote">Саарал мөрүүд нь жишээ өгөгдөл.</p></div>`}
 
@@ -488,66 +473,65 @@ function render(){
   document.querySelectorAll('.modes button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===S.mode));
   const st=$('#stage');
   if(S.mode==='board'){st.innerHTML=board();return}
-  const v=(V[S.screen]||V.home)(),pr=progress(),n=new Date(),hm=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
+  const v=(V[S.screen]||V.home)(),pr=progress(),n=new Date(),hm=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0'),atHome=S.screen==='home';
   const head=S.mode==='kiosk'
-    ?`<div class="dhead"><span class="name">Демо эмнэлэг</span><span class="clock">${hm}</span>${S.screen!=='home'?'<button class="help" data-act="home">Эхлэл</button>':''}<button class="help" data-act="help">Тусламж</button></div>`
+    ?`<div class="dhead"><span class="name">Демо эмнэлэг</span><span class="clock">${hm}</span>${atHome?'':'<button class="help" data-act="home">Эхлэл</button>'}<button class="help" data-act="help">Тусламж</button></div>`
     :`<div class="phonebar"><span>${hm}</span><span>ЗөвЭмч</span></div>
-      <div class="dhead">${S.screen!=='home'?`<button class="iconback" data-act="back" aria-label="Буцах">${icon('back',24)}</button>`:''}<span class="name">${S.screen==='home'?'Демо эмнэлэг':'Цаг авах'}</span>${S.screen!=='home'?'<button class="help" data-act="home">Эхлэл</button>':''}</div>`;
+      <div class="dhead">${atHome?'':`<button class="iconback" data-act="back" aria-label="Буцах">${icon('back',24)}</button>`}<span class="name">Демо эмнэлэг</span>${atHome?'':'<button class="help" data-act="home">Эхлэл</button>'}</div>`;
   st.innerHTML=`<div class="device ${S.mode}">${head}
-    ${pr?`<div class="progress"><i style="width:${pr[0]/pr[1]*100}%"></i></div>`:''}
-    <section class="content ${v.cls||''}" id="content">${v.body}</section>
+    ${pr?`<div class="progress"><i style="width:${pr*100}%"></i></div>`:''}
+    <section class="content" id="content">${S.helpMsg?'<div class="okmsg">Ажилтан ирж байна</div>':''}${v.body}</section>
     ${v.foot?`<div class="foot">${v.foot}</div>`:''}</div>`;
-  if(S.screen==='ticket'&&S.mode==='kiosk'){let s=30;const tick=()=>{const c=$('#cd');if(c)c.textContent=s+' секундын дараа эхлэл рүү буцна.';if(s--<=0)home()};tick();timer=setInterval(tick,1000)}
-  if(S.helpMsg){S.helpMsg=false;const c=$('#content');c.insertAdjacentHTML('afterbegin','<div class="okmsg">Ажилтан тан руу ирж байна (прототипт дүрслэл)</div>')}
+  S.helpMsg=false;
+  if(S.screen==='ticket'&&S.mode==='kiosk'){let s=30;const tick=()=>{const c=$('#cd');if(c)c.textContent=s+' сек дараа эхлэл рүү буцна.';if(s--<=0)home()};tick();timer=setInterval(tick,1000)}
 }
 
-/* ---------- Triage ---------- */
+/* ---------- Triage: returns 1–3 departments ---------- */
 function textFlag(){const t=S.form.text.toLowerCase();return FLAG_WORDS.some(w=>t.includes(w))}
-function ruleTriage(){const f=S.form,score={},add=(k,v)=>score[k]=(score[k]||0)+v;
-  f.areas.forEach(a=>add(AREAS.find(x=>x[0]===a)[2],2));
-  const t=' '+f.text.toLowerCase()+' ';KW.forEach(([k,ws])=>ws.forEach(w=>{if(t.includes(w))add(k,1)}));
-  const r=Object.entries(score).sort((a,b)=>b[1]-a[1]),tot=r.reduce((s,x)=>s+x[1],0);
-  let top=r[0]?r[0][0]:'dotor',alt=r[1]?r[1][0]:null,conf=r[0]?Math.min(.9,r[0][1]/(tot+1)+.25):.3;
-  if(f.age<16){alt=top==='huuhed'?alt:top;top='huuhed'}
-  else if(conf<.4){alt=top!=='dotor'?top:alt;top='dotor'}
-  const names=f.areas.map(a=>AREAS.find(x=>x[0]===a)[1].toLowerCase()).join(', ');
-  const reason=top==='huuhed'?'Хүүхдийг эхлээд хүүхдийн эмч үзэж, шаардлагатай бол нарийн мэргэжлийн эмч рүү илгээнэ.'
-    :top==='dotor'&&f.areas.length>1&&conf<.5?'Хэд хэдэн хэсэгт зовиуртай тул эхлээд дотрын эмч ерөнхий үзлэг хийж, шаардлагатай бол зөв эмч рүү илгээнэ.'
-    :`“${names}” хэсгийн зовиурыг энэ тасгийн эмч үздэг.`;
-  return {department:top,alternative:alt&&alt!==top?alt:null,urgency:f.severity>=9||(f.duration===DURATIONS[0]&&f.severity>=6)?'soon':'routine',confidence:conf,reason,source:'rules'}}
+function ruleTriage(){const f=S.form;
+  if(f.age<16)return ['huuhed'];
+  const out=[];f.areas.forEach(a=>{const d=AREAS.find(x=>x[0]===a)[2];if(!out.includes(d))out.push(d)});
+  const t=' '+f.text.toLowerCase()+' ';KW.forEach(([k,ws])=>{if(!out.includes(k)&&ws.some(w=>t.includes(w)))out.push(k)});
+  return (out.length?out:['dotor']).slice(0,3)}
 
 let sp=null;
 const sampler=()=>sp||(sp=(window.claude&&window.claude.use)?Promise.race([window.claude.use('sample').catch(()=>null),new Promise(r=>setTimeout(()=>r(null),6000))]):Promise.resolve(null));
 async function aiTriage(){const s=await sampler();if(!s)return null;const f=S.form;
-  const prompt=`You route outpatients at a Mongolian hospital to the right department. Never diagnose or name a disease.
+  const prompt=`You route outpatients at a Mongolian hospital to departments. Never diagnose.
 Departments (id: name — scope):
 ${DEPTS.map(d=>`${d.id}: ${d.name} — ${d.desc}`).join('\n')}
-Rules: under 16 → huuhed. Unclear → dotor. urgency "emergency" only if the ER is needed now; "soon" = within 1-2 days; else "routine".
+The patient may have several unrelated problems (e.g. a broken arm and a skin rash) and then needs one department per problem, at most 3. Under 16 → only huuhed. Unclear → dotor.
+urgency: "emergency" only if the ER is needed now; "soon" within 1-2 days; else "routine".
 Patient: areas: ${f.areas.map(a=>AREAS.find(x=>x[0]===a)[1]).join(', ')}; since: ${f.duration}; severity: ${f.severity}/10; age about ${f.age}; sex: ${f.sex}; own words: ${f.text||'(none)'}
-Reply with JSON only: {"department":"<id>","alternative":"<id or null>","urgency":"routine|soon|emergency","reason":"<one short, plain Mongolian sentence to the patient on why this department; no diagnosis>"}`;
-  try{const r=await s(prompt,{modelTier:'quick'}),m=(r&&r.text||'').match(/\{[\s\S]*\}/);if(!m)return null;const j=JSON.parse(m[0]);if(!dept(j.department))return null;
-    return {department:j.department,alternative:dept(j.alternative)?j.alternative:null,urgency:['routine','soon','emergency'].includes(j.urgency)?j.urgency:'routine',reason:String(j.reason||''),source:'ai'}}catch(e){return null}}
+Reply with JSON only: {"departments":["<id>",...],"urgency":"routine|soon|emergency"}`;
+  try{const r=await s(prompt,{modelTier:'quick'}),m=(r&&r.text||'').match(/\{[\s\S]*\}/);if(!m)return null;const j=JSON.parse(m[0]);
+    const ds=(Array.isArray(j.departments)?j.departments:[]).filter(dept).filter((x,i,a)=>a.indexOf(x)===i).slice(0,3);if(!ds.length)return null;
+    return {departments:ds,urgency:['routine','soon','emergency'].includes(j.urgency)?j.urgency:'routine'}}catch(e){return null}}
 async function analyze(){
   if(textFlag()){go('emergency');return}
   go('analyzing');
   const [ai]=await Promise.all([aiTriage(),new Promise(r=>setTimeout(r,1000))]);
   if(S.screen!=='analyzing')return;
-  S.triage=ai||ruleTriage();S.screen=S.triage.urgency==='emergency'?'emergency':'result';render()}
+  const f=S.form;
+  S.triageSource=ai?'ai':'rules';
+  S.urgency=ai?ai.urgency:(f.severity>=9||(f.duration===DURATIONS[0]&&f.severity>=6)?'soon':'routine');
+  S.plan=(ai?ai.departments:ruleTriage()).map(d=>({dept:d}));S.picks=[];
+  S.screen=S.urgency==='emergency'?'emergency':'plan';render()}
 
 /* ---------- Booking ---------- */
 function book(viaCard){const e=$('#ptErr');
-  if(viaCard)S.patient={rd:'ЖШ00000001',phone:''};
+  if(viaCard)S.patient={rd:'ЖШ00000001',phone:S.mode==='phone'?'99000000':''};
   const rd=S.patient.rd.trim().toUpperCase(),ph=S.patient.phone.replace(/\D/g,'');
-  if(!/^[А-ЯӨҮЁ]{2}\d{8}$/.test(rd)){e.textContent='Регистрийн дугаар 2 үсэг, 8 тоо байна. Жишээ: АА00000000';e.hidden=false;return}
-  if(S.mode==='phone'&&!/^\d{8}$/.test(ph)){e.textContent='Утасны дугаар 8 оронтой байна.';e.hidden=false;return}
-  const d=doctor(S.doctorId),dp=dept(d.dept);
-  if(isTaken(d.id,S.slot.day,S.slot.time)){S.screen='slots';render();return}
-  const n=S.bookings.filter(b=>doctor(b.doctorId).dept===dp.id).length+12;
-  const b={id:'b'+Date.now().toString(36),doctorId:d.id,day:S.slot.day,time:S.slot.time,ticket:dp.L+'-'+String(n).padStart(3,'0'),
-    source:S.mode==='kiosk'?'Киоск':'Утас',triage:S.path==='ai'&&S.triage?{dept:S.triage.department,source:S.triage.source}:null,phone:ph};
-  S.bookings.push(b);save();S.lastId=b.id;S.hist=[];S.screen='ticket';render()}
+  if(!/^[А-ЯӨҮЁ]{2}\d{8}$/.test(rd)){e.textContent='2 үсэг, 8 тоо. Жишээ: АА00000000';e.hidden=false;return}
+  if(S.mode==='phone'&&!/^\d{8}$/.test(ph)){e.textContent='Утасны дугаар 8 оронтой';e.hidden=false;return}
+  const group='g'+Date.now().toString(36);
+  S.picks.forEach((p,i)=>{const dp=dept(p.dept),n=S.bookings.filter(b=>doctor(b.doctorId).dept===dp.id).length+12;
+    S.bookings.push({id:group+i,group,doctorId:p.doctorId,day:p.day,time:p.time,ticket:dp.L+'-'+String(n).padStart(3,'0'),
+      source:S.mode==='kiosk'?'Киоск':'Утас',flow:S.flow||'direct',phone:ph})});
+  save();S.lastGroup=group;S.picks=[];S.hist=[];S.screen='ticket';render()}
 
 /* ---------- Events ---------- */
+function toReview(){S.hist=S.hist.filter(s=>!['slots','doctors','depts','review'].includes(s));S.screen='review';render()}
 function toggleArea(k){const a=S.form.areas,i=a.indexOf(k);i<0?a.push(k):a.splice(i,1)}
 document.addEventListener('click',ev=>{
   const m=ev.target.closest('[data-mode]');if(m){S.mode=m.dataset.mode;render();return}
@@ -556,11 +540,10 @@ document.addEventListener('click',ev=>{
     case 'back':back();break;
     case 'home':home();break;
     case 'help':S.helpMsg=true;render();break;
-    case 'start-ai':S.path='ai';S.form=blankForm();go('flags');break;
-    case 'start-direct':S.path='direct';go('depts');break;
+    case 'start-ai':S.flow='ai';S.form=blankForm();S.picks=[];go('areas');break;
+    case 'start-check':S.flow='check';S.picks=[];S.plan=CHECKUPS.map(([d,l])=>({dept:d,label:l}));go('plan');break;
+    case 'start-direct':S.flow='direct';S.picks=[];go('depts');break;
     case 'mybook':S.cancelArm=null;go('mybook');break;
-    case 'flag':go('emergency');break;
-    case 'noflag':go('areas');break;
     case 'area':toggleArea(x.k);render();break;
     case 'to-details':go('details');break;
     case 'dur':S.form.duration=x.k;render();break;
@@ -570,16 +553,20 @@ document.addEventListener('click',ev=>{
     case 'age':S.form.age=+x.v;render();break;
     case 'sex':S.form.sex=x.k;render();break;
     case 'analyze':analyze();break;
-    case 'alt':S.triage={...S.triage,department:S.triage.alternative,alternative:S.triage.department,reason:'Та өөр тасгийг сонголоо. Эргэлзэж байвал анх санал болгосон тасагт үзүүлээрэй.'};render();break;
     case 'call-staff':S.staffCalled=true;render();break;
     case 'pick-dept':S.deptId=x.id;go('doctors');break;
-    case 'pick-doc':S.doctorId=x.id;S.dayIdx=0;go('slots');break;
-    case 'quick':S.doctorId=x.doc;S.slot={day:x.day,time:x.time};S.manualId=false;go('identity');break;
+    case 'pick-doc':{S.doctorId=x.id;const i=DAYS.findIndex(d=>TIMES.some(t=>!isTaken(x.id,d.key,t)));S.dayIdx=Math.max(0,i);go('slots');break}
+    case 'quick':addPick(x.doc,x.day,x.time);S.screen==='doctors'?toReview():render();break;
+    case 'unpick':S.picks=S.picks.filter(p=>p.dept!==x.dept);render();break;
     case 'day':S.dayIdx=+x.i;render();break;
-    case 'time':S.slot={day:DAYS[S.dayIdx].key,time:x.time};S.manualId=false;go('identity');break;
-    case 'read-card':book(true);break;
-    case 'manual-id':S.manualId=true;render();break;
-    case 'fill-sample':S.patient={rd:'ЖШ00000001',phone:'99000000'};render();break;
+    case 'time':addPick(S.doctorId,DAYS[S.dayIdx].key,x.time);
+      S.hist[S.hist.length-1]==='plan'?back():toReview();break;
+    case 'to-review':go('review');break;
+    case 'remove':S.picks=S.picks.filter(p=>p.dept!==x.dept);render();break;
+    case 'add-more':go('depts');break;
+    case 'to-identity':S.idMethod=null;go('identity');break;
+    case 'id-card':book(true);break;
+    case 'id-manual':S.idMethod='manual';render();{const t=$('#pt-rd');if(t)t.focus()}break;
     case 'confirm':book(false);break;
     case 'cancel':if(S.cancelArm===x.id){S.bookings=S.bookings.filter(b=>b.id!==x.id);save();S.cancelArm=null}else S.cancelArm=x.id;render();break;
   }});
