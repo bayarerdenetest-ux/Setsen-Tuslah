@@ -499,70 +499,112 @@ function board(){const rows=[...SAMPLE.map(r=>({time:r[0],ticket:r[1],doctorId:r
   </tbody></table></div><p class="boardnote">Саарал мөрүүд нь жишээ өгөгдөл.</p></div>`}
 
 /* ---------- 3D body picker (three.js): a see-through x-ray figure with the organs visible inside ---------- */
-/* Rows: [id, name, area, position, radii, layer, mirrored, zRotation]  layer: s = body shell, o = organ.
-   Rows sharing an id form one part. The figure faces +z; +x is the patient's left.
+/* [id, name, area, layer, mirrored]  layer: s = body shell, o = organ. The figure faces +z; +x is the patient's left.
    Every part has the same colour; only the picked part is tinted. */
-const PARTDEF=[
-  ['head','Толгой','head',[0,1.665,.005],[.095,.118,.105],'s'],
-  ['head','Толгой','head',[0,1.6,.02],[.074,.085,.084],'s'],
-  ['eye','нүд','eye',[.034,1.675,.092],[.017,.011,.012],'s',1],
-  ['ear','чих','ent',[.095,1.655,0],[.014,.032,.022],'s',1],
-  ['nose','Хамар','ent',[0,1.635,.105],[.014,.026,.02],'s'],
-  ['neck','Хүзүү','ent',[0,1.51,-.005],[.052,.078,.055],'s'],
-  ['chest','Цээж','chest',[0,1.31,.025],[.168,.165,.1],'s'],
-  ['uback','Нуруу','back',[0,1.31,-.03],[.163,.165,.09],'s'],
-  ['belly','Хэвлий','belly',[0,1.08,.025],[.142,.135,.095],'s'],
-  ['lback','Бэлхүүс','back',[0,1.08,-.03],[.137,.135,.085],'s'],
-  ['pelvis','Аарцаг','uro',[0,.93,0],[.158,.1,.105],'s'],
-  ['shoulder','мөр','limbs',[.195,1.41,0],[.068,.062,.065],'s',1],
-  ['uarm','бугалга','limbs',[.236,1.245,0],[.047,.15,.05],'s',1,.16],
-  ['elbow','тохой','limbs',[.262,1.085,0],[.04,.042,.04],'s',1],
-  ['farm','шуу','limbs',[.285,.94,.008],[.037,.135,.039],'s',1,.16],
-  ['hand','гарын сарвуу','limbs',[.312,.775,.02],[.03,.075,.022],'s',1,.16],
-  ['thigh','гуя','limbs',[.092,.7,0],[.08,.215,.085],'s',1],
-  ['knee','өвдөг','limbs',[.09,.48,.008],[.055,.06,.057],'s',1],
-  ['shin','шилбэ','limbs',[.088,.28,-.005],[.052,.19,.056],'s',1],
-  ['foot','хөлийн тавхай','limbs',[.09,.04,.05],[.045,.035,.11],'s',1],
-  ['brain','Тархи','head',[0,1.69,-.005],[.074,.064,.084],'o'],
-  ['throat','Хоолой, бамбай','ent',[0,1.5,.035],[.03,.018,.016],'o'],
-  ['throat','Хоолой, бамбай','ent',{tube:[[0,1.57,.03],[0,1.5,.028],[0,1.44,.022],[0,1.39,.015]],r:.012},null,'o'],
-  ['lung','уушги','lung',[.078,1.33,0],[.058,.115,.062],'o',1],
-  ['heart','Зүрх','chest',[.022,1.3,.045],[.045,.058,.042],'o',0,.3],
-  ['liver','Элэг','belly',[-.055,1.165,.03],[.085,.05,.06],'o'],
-  ['stomach','Ходоод','belly',[.06,1.15,.04],[.05,.05,.042],'o',0,-.4],
-  ['spleen','Дэлүү','belly',[.118,1.165,-.02],[.024,.04,.025],'o'],
-  ['kidney','бөөр','uro',[.062,1.1,-.05],[.026,.042,.023],'o',1],
-  ['colon','Бүдүүн гэдэс','belly',{tube:[[-.085,.95,.04],[-.1,1.02,.045],[-.095,1.085,.045],[-.04,1.1,.055],[.04,1.1,.055],[.095,1.085,.045],[.1,1.02,.045],[.085,.96,.04],[.04,.93,.03],[0,.9,.015]],r:.02},null,'o'],
-  ['sgut','Нарийн гэдэс','belly',{tube:Array.from({length:13},(_,i)=>[.058*Math.sin(i*1.9),1.055-i*.0105,.05+.012*Math.cos(i*2.7)]),r:.016},null,'o'],
-  ['bladder','Давсаг','uro',[0,.915,.045],[.038,.032,.034],'o']
-];
+const PINFO=[['head','Толгой','head','s'],['eye','нүд','eye','s',1],['ear','чих','ent','s',1],['nose','Хамар','ent','s'],['neck','Хүзүү','ent','s'],
+  ['chest','Цээж','chest','s'],['uback','Нуруу','back','s'],['belly','Хэвлий','belly','s'],['lback','Бэлхүүс','back','s'],['pelvis','Аарцаг','uro','s'],
+  ['shoulder','мөр','limbs','s',1],['uarm','бугалга','limbs','s',1],['elbow','тохой','limbs','s',1],['farm','шуу','limbs','s',1],['hand','гарын сарвуу','limbs','s',1],
+  ['thigh','гуя','limbs','s',1],['knee','өвдөг','limbs','s',1],['shin','шилбэ','limbs','s',1],['foot','хөлийн тавхай','limbs','s',1],
+  ['brain','Тархи','head','o'],['throat','Хоолой, бамбай','ent','o'],['lung','уушги','lung','o',1],['heart','Зүрх','chest','o'],['liver','Элэг','belly','o'],
+  ['stomach','Ходоод','belly','o'],['spleen','Дэлүү','belly','o'],['kidney','бөөр','uro','o',1],['colon','Бүдүүн гэдэс','belly','o'],['sgut','Нарийн гэдэс','belly','o'],['bladder','Давсаг','uro','o']];
 const PART={};
-PARTDEF.forEach(([id,name,area,pos,rad,layer,mir,rz])=>{
-  const add=(k,nm,shape)=>{(PART[k]=PART[k]||{name:nm,area,layer,shapes:[],meshes:[]}).shapes.push(shape)};
-  if(mir){add(id+'L','Зүүн '+name,{pos,rad,rz:rz||0});add(id+'R','Баруун '+name,{pos:[-pos[0],pos[1],pos[2]],rad,rz:-(rz||0)})}
-  else add(id,name,pos.tube?{tube:pos.tube,r:pos.r}:{pos,rad,rz:rz||0})});
-const HOMEVIEW={yaw:.35,pitch:.05,d:4.55,tx:0,ty:1.02,tz:0};
+PINFO.forEach(([id,name,area,layer,mir])=>{
+  if(mir){PART[id+'L']={name:'Зүүн '+name,area,layer,meshes:[]};PART[id+'R']={name:'Баруун '+name,area,layer,meshes:[]}}
+  else PART[id]={name,area,layer,meshes:[]}});
+const HOMEVIEW={yaw:.3,pitch:.04,d:4.1,tx:0,ty:.98,tz:0};
 const B3={ready:false,failed:false,hover:null,last:null,gest:null,pinch:null,raf:0,v:{...HOMEVIEW},g:{...HOMEVIEW}};
-const XR={shell:[0x1b55d8,0x9ad6ff,.15,.95],organ:[0x3f8fea,0xdaf3ff,1,1],sel:[0xff9a1f,0xffe9bd],soft:0xff9a1f};
+const XR={shell:[0x1848c8,0x9fd8ff,.2,.96],organ:[0x4a98ee,0xe2f6ff,1,1],sel:[0xff9a1f,0xffe9bd],soft:0xff9a1f};
+
+/* Catmull-Rom through rings of [x, y, z, radiusA, radiusB], k samples per span */
+function smoothRings(R,k){const out=[],n=R.length,P=i=>R[Math.max(0,Math.min(n-1,i))];
+  for(let i=0;i<n-1;i++)for(let q=0;q<k;q++){const t=q/k,a=P(i-1),b=P(i),c=P(i+1),d=P(i+2);
+    out.push(b.map((_,m)=>.5*(2*b[m]+(c[m]-a[m])*t+(2*a[m]-5*b[m]+4*c[m]-d[m])*t*t+(3*b[m]-a[m]-3*c[m]+d[m])*t*t*t)))}
+  out.push(R[n-1].slice());return out}
+
+/* Skin a path with elliptical cross-sections. cut(i0,i1,front) returns a piece that shares the smooth normals,
+   so one limb or the torso can be split into separately pickable parts without visible seams. */
+function loftGeo(T,R0,seg,k,bump){const R=smoothRings(R0,k),n=R.length,pos=[],t=new T.Vector3(),w=new T.Vector3();let u=null;
+  for(let i=0;i<n;i++){const a=R[Math.max(0,i-1)],b=R[Math.min(n-1,i+1)];t.set(b[0]-a[0],b[1]-a[1],b[2]-a[2]).normalize();
+    if(!u){u=new T.Vector3(0,0,1);if(Math.abs(t.z)>.9)u.set(0,1,0);u.cross(t).normalize()}else u.addScaledVector(t,-u.dot(t)).normalize();
+    w.crossVectors(t,u);const f=bump?1+bump*Math.sin(i*1.25):1,ra=Math.max(.0006,R[i][3])*f,rb=Math.max(.0006,R[i][4])*f;
+    for(let j=0;j<=seg;j++){const an=j/seg*Math.PI*2,ca=Math.cos(an)*ra,sb=Math.sin(an)*rb;
+      pos.push(R[i][0]+u.x*ca+w.x*sb,R[i][1]+u.y*ca+w.y*sb,R[i][2]+u.z*ca+w.z*sb)}}
+  const idx=(i0,i1,j0,j1)=>{const o=[];for(let i=i0;i<i1;i++)for(let j=j0;j<j1;j++){const a=i*(seg+1)+j,b=a+seg+1;o.push(a,b,a+1,a+1,b,b+1)}return o};
+  const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setIndex(idx(0,n-1,0,seg));g.computeVertexNormals();
+  g.cut=(i0,i1,front)=>{const h=new T.BufferGeometry();h.setAttribute('position',g.attributes.position);h.setAttribute('normal',g.attributes.normal);
+    h.setIndex(idx(i0*k,i1*k,front===false?seg/2:0,front===true?seg/2:seg));return h};
+  return g}
+
+/* The anatomy. put(id, geometry[, position, radii, zRotation]) adds one piece to a part. Units are metres, feet at y = 0. */
+function buildBody(T,put){
+  const ball=new T.SphereGeometry(1,28,20),e=(id,pos,rad,rz)=>put(id,ball,pos,rad,rz||0);
+  const side=(R,s)=>R.map(r=>[r[0]*s,r[1],r[2],r[3],r[4]]),tube=(P,r)=>P.map(q=>[q[0],q[1],q[2],r,r]);
+  const both=fn=>{fn('L',1);fn('R',-1)};
+
+  /* Torso: one skin from crotch to neck, cut into pelvis / belly / chest / neck and into front / back */
+  const torso=loftGeo(T,[[0,.8,0,.045,.04],[0,.83,0,.1,.085],[0,.89,0,.162,.108],[0,.95,0,.172,.112],[0,1.02,.005,.152,.1],
+    [0,1.09,.008,.143,.098],[0,1.16,.01,.15,.102],[0,1.22,.012,.165,.108],[0,1.3,.014,.182,.116],[0,1.37,.01,.19,.112],
+    [0,1.43,.004,.188,.094],[0,1.47,0,.13,.075],[0,1.5,0,.068,.062],[0,1.55,.002,.054,.058],[0,1.6,.005,.054,.06]],40,5);
+  put('pelvis',torso.cut(0,4));put('belly',torso.cut(4,7,true));put('lback',torso.cut(4,7,false));
+  put('chest',torso.cut(7,11,true));put('uback',torso.cut(7,11,false));put('neck',torso.cut(11,14));
+
+  put('head',loftGeo(T,[[0,1.585,.012,.02,.025],[0,1.6,.016,.05,.06],[0,1.63,.016,.066,.08],[0,1.67,.008,.075,.092],[0,1.71,.002,.08,.098],
+    [0,1.75,-.002,.078,.095],[0,1.785,-.004,.058,.072],[0,1.803,-.005,.025,.03],[0,1.808,-.005,.002,.002]],32,5));
+  e('nose',[0,1.652,.103],[.013,.024,.017]);
+  both((S,s)=>{e('eye'+S,[.03*s,1.69,.094],[.015,.009,.008]);e('ear'+S,[.079*s,1.665,0],[.011,.03,.02])});
+
+  both((S,s)=>{
+    const arm=loftGeo(T,side([[.175,1.45,0,.03,.03],[.21,1.435,0,.058,.058],[.24,1.39,0,.06,.06],[.255,1.32,0,.052,.054],[.268,1.24,.002,.048,.052],
+      [.28,1.16,.004,.042,.044],[.29,1.105,.008,.038,.04],[.3,1.06,.012,.04,.041],[.312,.99,.02,.038,.036],[.324,.91,.03,.03,.027],[.332,.855,.036,.026,.02]],s),24,5);
+    put('shoulder'+S,arm.cut(0,3));put('uarm'+S,arm.cut(3,5));put('elbow'+S,arm.cut(5,7));put('farm'+S,arm.cut(7,10));
+    put('hand'+S,loftGeo(T,side([[.332,.86,.036,.024,.019],[.34,.82,.04,.04,.014],[.347,.775,.045,.042,.013],[.35,.752,.047,.036,.01],[.35,.745,.047,.01,.004]],s),20,4));
+    [-.027,-.009,.009,.027].forEach((dx,i)=>{const L=[.9,1,.95,.78][i];
+      put('hand'+S,loftGeo(T,side([[.35+dx,.758,.047,.009,.008],[.353+dx,.758-.038*L,.05,.0085,.0075],[.355+dx,.758-.068*L,.054,.0075,.007],[.356+dx,.758-.084*L,.056,.003,.003]],s),10,3))});
+    put('hand'+S,loftGeo(T,side([[.322,.828,.045,.012,.011],[.308,.797,.055,.012,.01],[.298,.766,.064,.009,.008],[.295,.752,.067,.003,.003]],s),10,3));
+
+    const leg=loftGeo(T,side([[.085,.93,0,.07,.075],[.095,.86,0,.088,.092],[.098,.76,.004,.082,.088],[.095,.65,.006,.07,.076],[.092,.56,.008,.058,.062],
+      [.09,.5,.012,.054,.058],[.09,.44,.006,.05,.052],[.09,.37,-.008,.054,.06],[.09,.27,-.006,.045,.048],[.09,.16,0,.034,.036],[.09,.09,0,.031,.034],[.09,.05,0,.033,.036]],s),28,5);
+    put('thigh'+S,leg.cut(0,4));put('knee'+S,leg.cut(4,6));put('shin'+S,leg.cut(6,11));
+    put('foot'+S,loftGeo(T,side([[.09,.04,-.055,.012,.012],[.09,.042,-.04,.033,.036],[.09,.045,0,.038,.04],[.093,.035,.06,.046,.03],
+      [.096,.026,.12,.044,.02],[.097,.02,.165,.03,.012],[.097,.018,.178,.004,.003]],s),20,4));
+
+    put('lung'+S,loftGeo(T,side([[.05,1.455,0,.012,.014],[.058,1.43,0,.035,.045],[.072,1.38,0,.052,.068],[.082,1.32,0,.06,.076],
+      [.09,1.26,0,.062,.078],[.092,1.215,0,.058,.07],[.09,1.195,0,.03,.04]],s),24,4));
+    e('kidney'+S,[.06*s,1.1,-.045],[.026,.045,.022]);
+    put('throat',loftGeo(T,side(tube([[0,1.398,.008],[.03,1.375,.004],[.055,1.355,0]],.008),s),10,3));
+    e('throat',[.02*s,1.515,.03],[.012,.024,.012]);
+    e('brain',[.022*s,1.725,-.005],[.036,.05,.07]);
+  });
+
+  e('brain',[0,1.68,-.045],[.04,.022,.03]);
+  put('throat',loftGeo(T,tube([[0,1.575,.022],[0,1.5,.02],[0,1.43,.012],[0,1.395,.008]],.011),12,3));
+  put('heart',loftGeo(T,[[0,1.365,.035,.012,.012],[.008,1.345,.04,.04,.036],[.02,1.31,.045,.052,.044],[.035,1.275,.05,.045,.038],[.05,1.245,.052,.025,.022],[.056,1.232,.053,.004,.004]],20,4));
+  put('heart',loftGeo(T,[[.005,1.36,.035,.013,.013],[.008,1.4,.03,.013,.013],[.02,1.415,.01,.012,.012],[.03,1.39,-.02,.011,.011],[.025,1.3,-.04,.01,.01],[.015,1.1,-.045,.009,.009],[.01,.99,-.04,.008,.008]],10,4));
+  put('liver',loftGeo(T,[[-.14,1.165,.015,.012,.02],[-.115,1.17,.02,.05,.062],[-.065,1.178,.025,.058,.07],[-.015,1.186,.035,.042,.052],[.035,1.192,.042,.024,.03],[.06,1.195,.043,.004,.006]],20,4));
+  put('stomach',loftGeo(T,[[.025,1.225,.03,.011,.011],[.055,1.222,.035,.03,.028],[.085,1.195,.04,.042,.038],[.088,1.155,.045,.04,.036],
+    [.062,1.125,.05,.03,.028],[.025,1.122,.05,.018,.018],[-.005,1.132,.047,.012,.012],[-.02,1.135,.045,.003,.003]],18,4));
+  e('spleen',[.125,1.19,-.02],[.022,.04,.028]);
+  put('colon',loftGeo(T,tube([[-.092,.94,.04],[-.1,.965,.042],[-.106,1.01,.045],[-.106,1.06,.045],[-.096,1.094,.047],[-.05,1.086,.06],[0,1.076,.065],[.05,1.086,.06],
+    [.1,1.1,.047],[.109,1.05,.042],[.106,.995,.04],[.088,.952,.036],[.048,.936,.03],[.02,.955,.02],[0,.93,0],[0,.885,-.01]],.019),12,6,.17));
+  put('sgut',loftGeo(T,tube(Array.from({length:64},(_,i)=>[.066*Math.sin(i*.95)*Math.cos(i*.11),1.052-.092*i/63+.011*Math.sin(i*1.7),.05+.014*Math.cos(i*1.3)]),.0125),8,3));
+  e('bladder',[0,.915,.04],[.04,.034,.035]);
+}
 
 function initBody(){if(B3.ready||B3.failed)return;
   if(!window.THREE){B3.failed=true;return}
   try{const T=THREE,r=new T.WebGLRenderer({antialias:true,alpha:true});r.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
-    const scene=new T.Scene(),cam=new T.PerspectiveCamera(30,1,.1,30),ball=new T.SphereGeometry(1,36,26);
-    /* Fresnel shading: faces turned away from the viewer glow, faces turned toward it stay clear */
-    const glow=opaque=>new T.ShaderMaterial({transparent:!opaque,depthWrite:opaque,
+    const scene=new T.Scene(),cam=new T.PerspectiveCamera(30,1,.1,30);
+    /* Fresnel shading: surfaces turned away from the viewer glow, surfaces facing the viewer stay clear */
+    const glow=opaque=>new T.ShaderMaterial({transparent:!opaque,depthWrite:opaque,side:T.DoubleSide,
       uniforms:{uBase:{value:new T.Color()},uRim:{value:new T.Color()},uA:{value:new T.Vector2(1,1)}},
       vertexShader:'varying vec3 vN;varying vec3 vV;void main(){vec4 mv=modelViewMatrix*vec4(position,1.0);vN=normalMatrix*normal;vV=-mv.xyz;gl_Position=projectionMatrix*mv;}',
-      fragmentShader:'uniform vec3 uBase;uniform vec3 uRim;uniform vec2 uA;varying vec3 vN;varying vec3 vV;void main(){float f=pow(1.0-abs(dot(normalize(vN),normalize(vV))),1.5);gl_FragColor=vec4(mix(uBase,uRim,f),mix(uA.x,uA.y,f));}'});
-    const hide=new T.MeshBasicMaterial({colorWrite:false});
-    for(const id in PART){const p=PART[id],organ=p.layer==='o';
-      p.shapes.forEach(sh=>{let geo=ball;
-        if(sh.tube)geo=new T.TubeGeometry(new T.CatmullRomCurve3(sh.tube.map(q=>new T.Vector3(...q))),sh.tube.length*8,sh.r,10,false);
-        const m=new T.Mesh(geo,glow(organ));
-        if(!sh.tube){m.position.set(...sh.pos);m.scale.set(...sh.rad);m.rotation.z=sh.rz}
-        m.userData.id=id;m.renderOrder=organ?0:2;scene.add(m);p.meshes.push(m);
-        /* Depth-only copy of each shell piece, drawn after the organs: overlapping pieces then read as one skin */
-        if(!organ){const pre=new T.Mesh(geo,hide);pre.position.copy(m.position);pre.scale.copy(m.scale);pre.rotation.copy(m.rotation);pre.renderOrder=1;scene.add(pre)}})}
+      fragmentShader:'uniform vec3 uBase;uniform vec3 uRim;uniform vec2 uA;varying vec3 vN;varying vec3 vV;void main(){float f=pow(1.0-abs(dot(normalize(vN),normalize(vV))),1.4);gl_FragColor=vec4(mix(uBase,uRim,f),mix(uA.x,uA.y,f));}'});
+    const hide=new T.MeshBasicMaterial({colorWrite:false,side:T.DoubleSide});
+    buildBody(T,(id,geo,pos,rad,rz)=>{const p=PART[id],organ=p.layer==='o',m=new T.Mesh(geo,glow(organ));
+      if(pos){m.position.set(...pos);m.scale.set(...rad);m.rotation.z=rz||0}
+      m.userData.id=id;m.renderOrder=organ?0:2;scene.add(m);p.meshes.push(m);
+      /* Depth-only copy of each skin piece, drawn after the organs: only the nearest skin surface is then shaded */
+      if(!organ){const pre=new T.Mesh(geo,hide);pre.position.copy(m.position);pre.scale.copy(m.scale);pre.rotation.copy(m.rotation);pre.renderOrder=1;scene.add(pre)}});
     Object.assign(B3,{r,scene,cam,ray:new T.Raycaster(),tmp:new T.Color(),ready:true,
       organs:Object.values(PART).filter(p=>p.layer==='o').flatMap(p=>p.meshes),shell:Object.values(PART).filter(p=>p.layer!=='o').flatMap(p=>p.meshes)});
     const el=r.domElement,pts=new Map();
