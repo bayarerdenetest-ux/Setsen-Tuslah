@@ -16,7 +16,7 @@
   --bg:#eef1f4; --surface:#ffffff; --soft:#f4f6f8; --ink:#16202a; --muted:#5e6c78; --line:#dde3e9;
   --accent:#1b63b5; --accent-ink:#ffffff; --accent-soft:#e7f0fa;
   --danger:#c62828; --danger-soft:#fdecea; --ok:#2e7d32; --ok-soft:#e8f5e9;
-  --frame:#1d2733; --body:#c5ced8;
+  --frame:#1d2733; --body:#c5ced8; --xray-bg:#020812; --xray-glow:#0a2247;
   --font:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
@@ -107,17 +107,18 @@ svg{display:block}
 .device.kiosk .areawrap.no3d{grid-template-columns:1fr}
 .areawrap>*{min-width:0}
 @media (max-width:900px){.device.kiosk .areawrap{grid-template-columns:1fr}}
-.bodypane{position:relative;border:2px solid var(--line);border-radius:20px;background:var(--soft);overflow:hidden}
+.bodypane{position:relative;border:2px solid var(--line);border-radius:20px;background:var(--xray-bg);overflow:hidden}
 .device.kiosk .content.tight{padding:22px 40px 14px;gap:16px}
 .device.phone .content.tight{gap:16px}
-.body3d{height:384px;touch-action:pan-y;cursor:grab}
+.body3d{height:384px;touch-action:none;cursor:grab;background:radial-gradient(ellipse at 50% 45%,var(--xray-glow),var(--xray-bg) 70%)}
 .device.phone .body3d{height:340px}
 .body3d canvas{display:block;width:100%;height:100%}
 .blabel{position:absolute;top:12px;left:12px;right:12px;text-align:center;font-weight:600;font-size:.8em;pointer-events:none}
 .blabel span{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 14px;display:inline-block}
 .blabel span.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .bctl{display:flex;gap:8px;justify-content:center;padding:10px;border-top:1px solid var(--line);background:var(--surface)}
-.bctl .help[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.bctl .help{min-width:48px;min-height:40px;font-size:.8em;white-space:nowrap;padding:6px 12px}
+.bctl .zoom{font-size:1.2em;line-height:1;padding:4px 0}
 .opts.compact{grid-template-columns:1fr 1fr;gap:10px}
 .opts.compact .opt{min-height:60px;padding:10px 36px 10px 12px;gap:12px;font-size:.86em;border-radius:14px}
 .opts.compact .opt .ic{width:38px;height:38px}
@@ -380,8 +381,10 @@ V.areas=()=>({cls:'tight',body:`
   <h1 class="q">Хаана тань өвдөж байна вэ?</h1>
   <div class="areawrap" id="areawrap">
     <div class="bodypane"><div class="body3d" id="body3d" aria-label="Хүний биеийн 3D загвар"></div><div class="blabel" id="blabel"></div>
-      <div class="bctl"><button class="help" data-act="b-flip">Эргүүлэх</button>
-        <button class="help" data-act="b-inner" aria-pressed="${B3.inner}">Дотор эрхтэн</button></div></div>
+      <div class="bctl"><button class="help zoom" data-act="b-out" aria-label="Жижигрүүлэх">−</button>
+        <button class="help zoom" data-act="b-in" aria-label="Томруулах">+</button>
+        <button class="help" data-act="b-back">Ар тал</button>
+        <button class="help" data-act="b-reset">Буцаах</button></div></div>
     <div class="opts compact">${AREAS.map(([k,t,,ic])=>`<button class="opt" data-act="area" data-k="${k}" aria-pressed="${S.form.areas.includes(k)}"><span class="ic">${icon(ic,22)}</span><span>${esc(t)}</span></button>`).join('')}</div>
   </div>`,
   foot:backBtn+`<button class="btn grow" data-act="to-details" ${S.form.areas.length?'':'disabled'}>Үргэлжлүүлэх${S.form.areas.length?' ('+S.form.areas.length+')':''}</button>`});
@@ -495,90 +498,130 @@ function board(){const rows=[...SAMPLE.map(r=>({time:r[0],ticket:r[1],doctorId:r
     <td>${esc(d.name)}</td><td>${esc(dept(d.dept).name)}</td><td>${r.source}</td><td>${r.via}${r.sample?' · жишээ':''}</td></tr>`}).join('')}
   </tbody></table></div><p class="boardnote">Саарал мөрүүд нь жишээ өгөгдөл.</p></div>`}
 
-/* ---------- 3D body picker (three.js). One canvas, kept alive across re-renders ---------- */
-/* [id, name, area, position, radii, layer, mirrored]  layer: s = shell (see-through in organ view), f = always solid, o = organ.
-   The figure faces +z; +x is the patient's left. Every part uses the same colour; only selection is tinted. */
+/* ---------- 3D body picker (three.js): a see-through x-ray figure with the organs visible inside ---------- */
+/* Rows: [id, name, area, position, radii, layer, mirrored, zRotation]  layer: s = body shell, o = organ.
+   Rows sharing an id form one part. The figure faces +z; +x is the patient's left.
+   Every part has the same colour; only the picked part is tinted. */
 const PARTDEF=[
-  ['head','Толгой','head',[0,1.63,0],[.1,.12,.105],'s'],
-  ['eye','нүд','eye',[.036,1.65,.088],[.02,.014,.014],'f',1],
-  ['ear','чих','ent',[.1,1.63,0],[.016,.032,.024],'f',1],
-  ['nose','Хамар','ent',[0,1.615,.102],[.016,.024,.02],'f'],
-  ['neck','Хоолой, хүзүү','ent',[0,1.49,0],[.05,.07,.05],'s'],
-  ['chest','Цээж','chest',[0,1.3,.022],[.17,.15,.1],'s'],
-  ['uback','Нуруу','back',[0,1.3,-.03],[.165,.15,.09],'s'],
-  ['belly','Хэвлий','belly',[0,1.07,.022],[.15,.125,.095],'s'],
-  ['lback','Бэлхүүс','back',[0,1.07,-.03],[.145,.125,.085],'s'],
-  ['pelvis','Аарцаг','uro',[0,.91,0],[.16,.09,.1],'s'],
-  ['shoulder','мөр','limbs',[.2,1.4,0],[.062,.06,.06],'f',1],
-  ['uarm','бугалга','limbs',[.235,1.23,0],[.045,.14,.048],'f',1],
-  ['elbow','тохой','limbs',[.25,1.08,0],[.04,.04,.04],'f',1],
-  ['farm','шуу','limbs',[.262,.94,.01],[.036,.125,.038],'f',1],
-  ['hand','гарын сарвуу','limbs',[.275,.78,.02],[.03,.07,.022],'f',1],
-  ['thigh','гуя','limbs',[.09,.68,0],[.075,.2,.08],'f',1],
-  ['knee','өвдөг','limbs',[.09,.47,.008],[.055,.055,.055],'f',1],
-  ['shin','шилбэ','limbs',[.09,.27,0],[.05,.18,.052],'f',1],
-  ['foot','хөлийн тавхай','limbs',[.09,.04,.05],[.045,.035,.11],'f',1],
-  ['brain','Тархи','head',[0,1.65,0],[.08,.07,.088],'o'],
-  ['lung','уушги','lung',[.075,1.33,0],[.058,.105,.06],'o',1],
-  ['heart','Зүрх','chest',[.02,1.3,.05],[.042,.052,.038],'o'],
-  ['liver','Элэг','belly',[-.06,1.15,.03],[.08,.048,.058],'o'],
-  ['stomach','Ходоод','belly',[.06,1.14,.04],[.052,.048,.042],'o'],
-  ['gut','Гэдэс','belly',[0,1.02,.03],[.105,.068,.058],'o'],
-  ['kidney','бөөр','uro',[.065,1.1,-.045],[.028,.042,.024],'o',1],
-  ['bladder','Давсаг','uro',[0,.92,.04],[.04,.034,.034],'o']
+  ['head','Толгой','head',[0,1.665,.005],[.095,.118,.105],'s'],
+  ['head','Толгой','head',[0,1.6,.02],[.074,.085,.084],'s'],
+  ['eye','нүд','eye',[.034,1.675,.092],[.017,.011,.012],'s',1],
+  ['ear','чих','ent',[.095,1.655,0],[.014,.032,.022],'s',1],
+  ['nose','Хамар','ent',[0,1.635,.105],[.014,.026,.02],'s'],
+  ['neck','Хүзүү','ent',[0,1.51,-.005],[.052,.078,.055],'s'],
+  ['chest','Цээж','chest',[0,1.31,.025],[.168,.165,.1],'s'],
+  ['uback','Нуруу','back',[0,1.31,-.03],[.163,.165,.09],'s'],
+  ['belly','Хэвлий','belly',[0,1.08,.025],[.142,.135,.095],'s'],
+  ['lback','Бэлхүүс','back',[0,1.08,-.03],[.137,.135,.085],'s'],
+  ['pelvis','Аарцаг','uro',[0,.93,0],[.158,.1,.105],'s'],
+  ['shoulder','мөр','limbs',[.195,1.41,0],[.068,.062,.065],'s',1],
+  ['uarm','бугалга','limbs',[.236,1.245,0],[.047,.15,.05],'s',1,.16],
+  ['elbow','тохой','limbs',[.262,1.085,0],[.04,.042,.04],'s',1],
+  ['farm','шуу','limbs',[.285,.94,.008],[.037,.135,.039],'s',1,.16],
+  ['hand','гарын сарвуу','limbs',[.312,.775,.02],[.03,.075,.022],'s',1,.16],
+  ['thigh','гуя','limbs',[.092,.7,0],[.08,.215,.085],'s',1],
+  ['knee','өвдөг','limbs',[.09,.48,.008],[.055,.06,.057],'s',1],
+  ['shin','шилбэ','limbs',[.088,.28,-.005],[.052,.19,.056],'s',1],
+  ['foot','хөлийн тавхай','limbs',[.09,.04,.05],[.045,.035,.11],'s',1],
+  ['brain','Тархи','head',[0,1.69,-.005],[.074,.064,.084],'o'],
+  ['throat','Хоолой, бамбай','ent',[0,1.5,.035],[.03,.018,.016],'o'],
+  ['throat','Хоолой, бамбай','ent',{tube:[[0,1.57,.03],[0,1.5,.028],[0,1.44,.022],[0,1.39,.015]],r:.012},null,'o'],
+  ['lung','уушги','lung',[.078,1.33,0],[.058,.115,.062],'o',1],
+  ['heart','Зүрх','chest',[.022,1.3,.045],[.045,.058,.042],'o',0,.3],
+  ['liver','Элэг','belly',[-.055,1.165,.03],[.085,.05,.06],'o'],
+  ['stomach','Ходоод','belly',[.06,1.15,.04],[.05,.05,.042],'o',0,-.4],
+  ['spleen','Дэлүү','belly',[.118,1.165,-.02],[.024,.04,.025],'o'],
+  ['kidney','бөөр','uro',[.062,1.1,-.05],[.026,.042,.023],'o',1],
+  ['colon','Бүдүүн гэдэс','belly',{tube:[[-.085,.95,.04],[-.1,1.02,.045],[-.095,1.085,.045],[-.04,1.1,.055],[.04,1.1,.055],[.095,1.085,.045],[.1,1.02,.045],[.085,.96,.04],[.04,.93,.03],[0,.9,.015]],r:.02},null,'o'],
+  ['sgut','Нарийн гэдэс','belly',{tube:Array.from({length:13},(_,i)=>[.058*Math.sin(i*1.9),1.055-i*.0105,.05+.012*Math.cos(i*2.7)]),r:.016},null,'o'],
+  ['bladder','Давсаг','uro',[0,.915,.045],[.038,.032,.034],'o']
 ];
 const PART={};
-PARTDEF.forEach(([id,name,area,pos,rad,layer,mir])=>{
-  if(mir){PART[id+'L']={name:'Зүүн '+name,area,layer,pos,rad};PART[id+'R']={name:'Баруун '+name,area,layer,pos:[-pos[0],pos[1],pos[2]],rad}}
-  else PART[id]={name,area,layer,pos,rad}});
-const B3={ready:false,failed:false,inner:false,yaw:.45,target:.45,hover:null,last:null,drag:null,raf:0};
+PARTDEF.forEach(([id,name,area,pos,rad,layer,mir,rz])=>{
+  const add=(k,nm,shape)=>{(PART[k]=PART[k]||{name:nm,area,layer,shapes:[],meshes:[]}).shapes.push(shape)};
+  if(mir){add(id+'L','Зүүн '+name,{pos,rad,rz:rz||0});add(id+'R','Баруун '+name,{pos:[-pos[0],pos[1],pos[2]],rad,rz:-(rz||0)})}
+  else add(id,name,pos.tube?{tube:pos.tube,r:pos.r}:{pos,rad,rz:rz||0})});
+const HOMEVIEW={yaw:.35,pitch:.05,d:4.55,tx:0,ty:1.02,tz:0};
+const B3={ready:false,failed:false,hover:null,last:null,gest:null,pinch:null,raf:0,v:{...HOMEVIEW},g:{...HOMEVIEW}};
+const XR={shell:[0x1b55d8,0x9ad6ff,.15,.95],organ:[0x3f8fea,0xdaf3ff,1,1],sel:[0xff9a1f,0xffe9bd],soft:0xff9a1f};
 
 function initBody(){if(B3.ready||B3.failed)return;
   if(!window.THREE){B3.failed=true;return}
   try{const T=THREE,r=new T.WebGLRenderer({antialias:true,alpha:true});r.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
-    const scene=new T.Scene(),cam=new T.PerspectiveCamera(30,1,.1,20);cam.position.set(0,1,4.1);cam.lookAt(0,1,0);
-    scene.add(new T.HemisphereLight(0xffffff,0x8a97a6,.95));const sun=new T.DirectionalLight(0xffffff,.55);sun.position.set(1.2,2.4,3);scene.add(sun);
-    const fig=new T.Group(),geo=new T.SphereGeometry(1,28,20);scene.add(fig);
-    for(const id in PART){const p=PART[id],m=new T.Mesh(geo,new T.MeshStandardMaterial({roughness:.8,metalness:0}));
-      m.position.set(...p.pos);m.scale.set(...p.rad);m.userData.id=id;m.renderOrder=p.layer==='s'?2:1;p.mesh=m;fig.add(m)}
-    Object.assign(B3,{r,scene,cam,fig,ray:new T.Raycaster(),cBody:new T.Color(),cAcc:new T.Color(),ready:true});
-    const el=r.domElement;
-    el.addEventListener('pointerdown',e=>{B3.drag={x:e.clientX,yaw:B3.yaw,moved:0};try{el.setPointerCapture(e.pointerId)}catch(_){}});
-    el.addEventListener('pointermove',e=>{const d=B3.drag;
-      if(d){const dx=e.clientX-d.x;d.moved=Math.max(d.moved,Math.abs(dx));if(d.moved>5){B3.yaw=B3.target=d.yaw+dx*.012;drawBody()}}
-      else if(e.pointerType==='mouse'){const id=pickAt(e);if(id!==B3.hover){B3.hover=id;setLabel();paintBody()}}});
-    el.addEventListener('pointerup',e=>{const d=B3.drag;B3.drag=null;if(d&&d.moved<=5){const id=pickAt(e);if(id){togglePart(id);B3.last=id;render()}}});
-    el.addEventListener('pointercancel',()=>{B3.drag=null});
+    const scene=new T.Scene(),cam=new T.PerspectiveCamera(30,1,.1,30),ball=new T.SphereGeometry(1,36,26);
+    /* Fresnel shading: faces turned away from the viewer glow, faces turned toward it stay clear */
+    const glow=opaque=>new T.ShaderMaterial({transparent:!opaque,depthWrite:opaque,
+      uniforms:{uBase:{value:new T.Color()},uRim:{value:new T.Color()},uA:{value:new T.Vector2(1,1)}},
+      vertexShader:'varying vec3 vN;varying vec3 vV;void main(){vec4 mv=modelViewMatrix*vec4(position,1.0);vN=normalMatrix*normal;vV=-mv.xyz;gl_Position=projectionMatrix*mv;}',
+      fragmentShader:'uniform vec3 uBase;uniform vec3 uRim;uniform vec2 uA;varying vec3 vN;varying vec3 vV;void main(){float f=pow(1.0-abs(dot(normalize(vN),normalize(vV))),1.5);gl_FragColor=vec4(mix(uBase,uRim,f),mix(uA.x,uA.y,f));}'});
+    const hide=new T.MeshBasicMaterial({colorWrite:false});
+    for(const id in PART){const p=PART[id],organ=p.layer==='o';
+      p.shapes.forEach(sh=>{let geo=ball;
+        if(sh.tube)geo=new T.TubeGeometry(new T.CatmullRomCurve3(sh.tube.map(q=>new T.Vector3(...q))),sh.tube.length*8,sh.r,10,false);
+        const m=new T.Mesh(geo,glow(organ));
+        if(!sh.tube){m.position.set(...sh.pos);m.scale.set(...sh.rad);m.rotation.z=sh.rz}
+        m.userData.id=id;m.renderOrder=organ?0:2;scene.add(m);p.meshes.push(m);
+        /* Depth-only copy of each shell piece, drawn after the organs: overlapping pieces then read as one skin */
+        if(!organ){const pre=new T.Mesh(geo,hide);pre.position.copy(m.position);pre.scale.copy(m.scale);pre.rotation.copy(m.rotation);pre.renderOrder=1;scene.add(pre)}})}
+    Object.assign(B3,{r,scene,cam,ray:new T.Raycaster(),tmp:new T.Color(),ready:true,
+      organs:Object.values(PART).filter(p=>p.layer==='o').flatMap(p=>p.meshes),shell:Object.values(PART).filter(p=>p.layer!=='o').flatMap(p=>p.meshes)});
+    const el=r.domElement,pts=new Map();
+    const two=()=>{const [a,b]=[...pts.values()];return {dist:Math.hypot(a.x-b.x,a.y-b.y)||1,cx:(a.x+b.x)/2,cy:(a.y+b.y)/2}};
+    el.addEventListener('pointerdown',e=>{try{el.setPointerCapture(e.pointerId)}catch(_){}pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+      if(pts.size===1)B3.gest={moved:0,multi:false,pan:e.button===2||e.shiftKey};else{if(B3.gest)B3.gest.multi=true;B3.pinch=two()}});
+    el.addEventListener('pointermove',e=>{const prev=pts.get(e.pointerId),g=B3.gest;
+      if(!prev||!g){if(e.pointerType==='mouse'){const id=pickAt(e);if(id!==B3.hover){B3.hover=id;setLabel();paintBody()}}return}
+      const dx=e.clientX-prev.x,dy=e.clientY-prev.y;pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+      if(pts.size===1){g.moved+=Math.abs(dx)+Math.abs(dy);if(g.moved>6){
+          if(g.pan)panBy(dx,dy);else{B3.g.yaw-=dx*.01;B3.g.pitch=Math.max(-1.45,Math.min(1.45,B3.g.pitch+dy*.01))}
+          Object.assign(B3.v,B3.g);drawBody()}}
+      else if(pts.size===2){const n=two(),o=B3.pinch||n;zoomAt(o.dist/n.dist,n.cx,n.cy);panBy(n.cx-o.cx,n.cy-o.cy);B3.pinch=n;Object.assign(B3.v,B3.g);drawBody()}});
+    const end=e=>{const g=B3.gest;pts.delete(e.pointerId);if(pts.size<2)B3.pinch=null;if(pts.size)return;B3.gest=null;
+      if(e.type==='pointerup'&&g&&!g.multi&&g.moved<=6){const id=pickAt(e);if(id){togglePart(id);B3.last=id;render()}}};
+    el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end);
     el.addEventListener('pointerleave',()=>{if(B3.hover){B3.hover=null;setLabel();paintBody()}});
+    el.addEventListener('wheel',e=>{e.preventDefault();zoomAt(Math.exp(e.deltaY*.0015),e.clientX,e.clientY);Object.assign(B3.v,B3.g);drawBody()},{passive:false});
+    el.addEventListener('contextmenu',e=>e.preventDefault());
   }catch(e){B3.failed=true}}
 
-function pickAt(e){const el=B3.r.domElement,b=el.getBoundingClientRect();
+/* Camera basis for the goal view, and world units per screen pixel at the orbit centre */
+function camAxes(){const g=B3.g,h=B3.r.domElement.clientHeight||384;
+  return {right:[Math.cos(g.yaw),0,-Math.sin(g.yaw)],up:[-Math.sin(g.yaw)*Math.sin(g.pitch),Math.cos(g.pitch),-Math.cos(g.yaw)*Math.sin(g.pitch)],px:2*g.d*Math.tan(Math.PI/12)/h}}
+function shiftTarget(rx,uy){const g=B3.g,a=camAxes();
+  g.tx=Math.max(-.45,Math.min(.45,g.tx+a.right[0]*rx+a.up[0]*uy));g.ty=Math.max(0,Math.min(1.8,g.ty+a.right[1]*rx+a.up[1]*uy));g.tz=Math.max(-.3,Math.min(.3,g.tz+a.right[2]*rx+a.up[2]*uy))}
+function panBy(dx,dy){const a=camAxes();shiftTarget(-dx*a.px,dy*a.px)}
+/* Zoom keeps the point under the fingers (or cursor) in place */
+function zoomAt(f,cx,cy){const g=B3.g,b=B3.r.domElement.getBoundingClientRect(),a=camAxes(),nd=Math.max(.7,Math.min(5.5,g.d*f)),k=1-nd/g.d;
+  shiftTarget((cx-b.left-b.width/2)*a.px*k,-(cy-b.top-b.height/2)*a.px*k);g.d=nd}
+function zoomBy(f){if(!B3.ready)return;B3.g.d=Math.max(.7,Math.min(5.5,B3.g.d*f));drawBody()}
+
+function pickAt(e){const b=B3.r.domElement.getBoundingClientRect();
   B3.ray.setFromCamera({x:(e.clientX-b.left)/b.width*2-1,y:-((e.clientY-b.top)/b.height)*2+1},B3.cam);
-  const hit=B3.ray.intersectObjects(Object.values(PART).filter(p=>p.pick).map(p=>p.mesh))[0];return hit?hit.object.userData.id:null}
+  const hit=B3.ray.intersectObjects(B3.organs)[0]||B3.ray.intersectObjects(B3.shell)[0];return hit?hit.object.userData.id:null}
 
 function paintBody(){if(!B3.ready)return;const f=S.form;
-  for(const id in PART){const p=PART[id],m=p.mesh,mat=m.material,ghost=p.layer==='s'&&B3.inner;
-    m.visible=p.layer==='o'?B3.inner:true;p.pick=m.visible&&!ghost;
-    if(mat.transparent!==ghost){mat.transparent=ghost;mat.depthWrite=!ghost;mat.needsUpdate=true}
-    const sel=f.parts.includes(id),soft=!sel&&f.areas.includes(p.area)&&!f.parts.some(x=>PART[x].area===p.area)&&p.layer!=='o';
-    mat.opacity=ghost?(sel||soft?.3:.13):1;
-    mat.color.copy(B3.cBody);if(sel)mat.color.copy(B3.cAcc);else if(soft)mat.color.lerp(B3.cAcc,.45);
-    if(B3.hover===id&&!sel)mat.color.lerp(B3.cAcc,.28)}
+  for(const id in PART){const p=PART[id],organ=p.layer==='o',base=organ?XR.organ:XR.shell;
+    const sel=f.parts.includes(id),soft=!sel&&!organ&&f.areas.includes(p.area)&&!f.parts.some(x=>PART[x].area===p.area);
+    p.meshes.forEach(m=>{const u=m.material.uniforms;
+      u.uBase.value.setHex(sel?XR.sel[0]:base[0]);u.uRim.value.setHex(sel?XR.sel[1]:base[1]);
+      if(soft)u.uBase.value.lerp(B3.tmp.setHex(XR.soft),.6);
+      if(B3.hover===id&&!sel){u.uBase.value.lerp(B3.tmp.setHex(0xffffff),.3)}
+      u.uA.value.set(organ?1:sel?.6:soft?.38:B3.hover===id?.3:base[2],base[3])})}
   drawBody()}
 
 function drawBody(){if(!B3.ready)return;cancelAnimationFrame(B3.raf);
-  const step=()=>{const d=B3.target-B3.yaw;if(Math.abs(d)>.003){B3.yaw+=d*.2;B3.raf=requestAnimationFrame(step)}else B3.yaw=B3.target;
-    B3.fig.rotation.y=B3.yaw;B3.r.render(B3.scene,B3.cam)};step()}
+  const step=()=>{const v=B3.v,g=B3.g;let far=false;
+    for(const k in g){const d=g[k]-v[k];if(Math.abs(d)>.002){v[k]+=d*.22;far=true}else v[k]=g[k]}
+    const c=Math.cos(v.pitch);B3.cam.position.set(v.tx+v.d*Math.sin(v.yaw)*c,v.ty+v.d*Math.sin(v.pitch),v.tz+v.d*Math.cos(v.yaw)*c);
+    B3.cam.lookAt(v.tx,v.ty,v.tz);B3.r.render(B3.scene,B3.cam);if(far)B3.raf=requestAnimationFrame(step)};step()}
 
 function setLabel(){const el=$('#blabel');if(!el)return;const id=B3.hover||(S.form.parts.includes(B3.last)?B3.last:null);
   el.innerHTML=id?`<span class="${S.form.parts.includes(id)?'on':''}">${esc(PART[id].name)}</span>`:'<span>Дарж сонгоно · Чирж эргүүлнэ</span>'}
 
 function mountBody(){const host=$('#body3d');if(!host)return;initBody();
   if(B3.failed){host.parentElement.hidden=true;$('#areawrap').classList.add('no3d');return}
-  host.appendChild(B3.r.domElement);const w=host.clientWidth||300,h=host.clientHeight||400;
+  host.appendChild(B3.r.domElement);const w=host.clientWidth||300,h=host.clientHeight||384;
   B3.r.setSize(w,h,false);B3.cam.aspect=w/h;B3.cam.updateProjectionMatrix();
-  const cs=getComputedStyle(document.documentElement);
-  B3.cBody.set(cs.getPropertyValue('--body').trim()||'#c5ced8');B3.cAcc.set(cs.getPropertyValue('--accent').trim()||'#1b63b5');
   setLabel();paintBody()}
 window.addEventListener('resize',()=>{if($('#body3d'))mountBody()});
 
@@ -666,8 +709,10 @@ document.addEventListener('click',ev=>{
     case 'start-direct':S.flow='direct';S.picks=[];go('depts');break;
     case 'mybook':S.cancelArm=null;go('mybook');break;
     case 'area':toggleArea(x.k);render();break;
-    case 'b-flip':B3.target+=Math.PI;drawBody();break;
-    case 'b-inner':B3.inner=!B3.inner;B3.hover=null;render();break;
+    case 'b-in':zoomBy(.75);break;
+    case 'b-out':zoomBy(1.33);break;
+    case 'b-back':B3.g.yaw+=Math.PI;drawBody();break;
+    case 'b-reset':Object.assign(B3.g,HOMEVIEW);B3.v.yaw%=Math.PI*2;drawBody();break;
     case 'to-details':go('details');break;
     case 'dur':S.form.duration=x.k;render();break;
     case 'sev':S.form.severity=+x.v;render();break;
