@@ -16,17 +16,17 @@
   --bg:#eef1f4; --surface:#ffffff; --soft:#f4f6f8; --ink:#16202a; --muted:#5e6c78; --line:#dde3e9;
   --accent:#1b63b5; --accent-ink:#ffffff; --accent-soft:#e7f0fa;
   --danger:#c62828; --danger-soft:#fdecea; --ok:#2e7d32; --ok-soft:#e8f5e9;
-  --frame:#1d2733;
+  --frame:#1d2733; --body:#c5ced8;
   --font:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0e1419; --surface:#161e26; --soft:#1c262f; --ink:#e8eef3; --muted:#9aa9b5; --line:#2a3743;
   --accent:#6aa9ec; --accent-ink:#0a1622; --accent-soft:#1a2f45;
-  --danger:#ff8a80; --danger-soft:#3a1a18; --ok:#81c784; --ok-soft:#173020; --frame:#05080b; color-scheme:dark }}
+  --danger:#ff8a80; --danger-soft:#3a1a18; --ok:#81c784; --ok-soft:#173020; --frame:#05080b; --body:#6f7f8f; color-scheme:dark }}
 :root[data-theme="dark"]{
   --bg:#0e1419; --surface:#161e26; --soft:#1c262f; --ink:#e8eef3; --muted:#9aa9b5; --line:#2a3743;
   --accent:#6aa9ec; --accent-ink:#0a1622; --accent-soft:#1a2f45;
-  --danger:#ff8a80; --danger-soft:#3a1a18; --ok:#81c784; --ok-soft:#173020; --frame:#05080b; color-scheme:dark }
+  --danger:#ff8a80; --danger-soft:#3a1a18; --ok:#81c784; --ok-soft:#173020; --frame:#05080b; --body:#6f7f8f; color-scheme:dark }
 
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.45;
@@ -48,7 +48,7 @@ svg{display:block}
 .stage{display:flex;justify-content:center}
 
 .device{background:var(--surface);display:flex;flex-direction:column;width:100%;overflow:hidden;box-shadow:0 20px 50px -30px rgba(10,30,50,.5)}
-.device.kiosk{max-width:1000px;height:680px;border:16px solid var(--frame);border-radius:24px;font-size:20px}
+.device.kiosk{max-width:1000px;height:740px;border:16px solid var(--frame);border-radius:24px;font-size:20px}
 .device.phone{max-width:390px;height:780px;border:10px solid var(--frame);border-radius:42px;font-size:16px}
 @media (max-width:560px){
   .device.kiosk{height:auto;min-height:600px;border-width:8px;border-radius:14px;font-size:17px}
@@ -100,6 +100,28 @@ svg{display:block}
 .opt.center{justify-content:center;text-align:center}
 .tile{flex-direction:column;align-items:flex-start;justify-content:space-between;min-height:130px}
 .device.phone .tile{min-height:104px}
+
+/* Body picker: 3D figure beside the area list */
+.areawrap{display:grid;gap:20px}
+.device.kiosk .areawrap{grid-template-columns:minmax(260px,340px) 1fr;align-items:start}
+.device.kiosk .areawrap.no3d{grid-template-columns:1fr}
+.areawrap>*{min-width:0}
+@media (max-width:900px){.device.kiosk .areawrap{grid-template-columns:1fr}}
+.bodypane{position:relative;border:2px solid var(--line);border-radius:20px;background:var(--soft);overflow:hidden}
+.device.kiosk .content.tight{padding:22px 40px 14px;gap:16px}
+.device.phone .content.tight{gap:16px}
+.body3d{height:384px;touch-action:pan-y;cursor:grab}
+.device.phone .body3d{height:340px}
+.body3d canvas{display:block;width:100%;height:100%}
+.blabel{position:absolute;top:12px;left:12px;right:12px;text-align:center;font-weight:600;font-size:.8em;pointer-events:none}
+.blabel span{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 14px;display:inline-block}
+.blabel span.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.bctl{display:flex;gap:8px;justify-content:center;padding:10px;border-top:1px solid var(--line);background:var(--surface)}
+.bctl .help[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.opts.compact{grid-template-columns:1fr 1fr;gap:10px}
+.opts.compact .opt{min-height:60px;padding:10px 36px 10px 12px;gap:12px;font-size:.86em;border-radius:14px}
+.opts.compact .opt .ic{width:38px;height:38px}
+.opts.compact .opt[aria-pressed="true"]::after{top:50%;right:10px;margin-top:-10px;width:20px;height:20px}
 
 /* Home: three big doors */
 .doors{display:grid;gap:16px;flex:1}
@@ -226,6 +248,7 @@ tr.sample td{color:var(--muted)}
 </header>
 <main class="stage" id="stage"></main>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 /* ---------- Icons (24px line) ---------- */
 const P={
@@ -251,6 +274,7 @@ const P={
   x:'<path d="M6 6l12 12M18 6L6 18"/>',
   plus:'<path d="M12 5v14M5 12h14"/>',
   baby:'<circle cx="12" cy="8" r="4"/><path d="M6 21c0-4 2.7-7 6-7s6 3 6 7"/>',
+  lung:'<path d="M12 3v9"/><path d="M12 12c-2 0-3 1-3 3v2c0 2-1 3-3 3s-2-1-2-3c0-5 2-9 5-10"/><path d="M12 12c2 0 3 1 3 3v2c0 2 1 3 3 3s2-1 2-3c0-5-2-9-5-10"/>',
   woman:'<circle cx="12" cy="8" r="5"/><path d="M12 13v8M9 18h6"/>'
 };
 const icon=(k,s=26)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[k]}</svg>`;
@@ -279,7 +303,7 @@ const AREAS=[
   ['head','Толгой','medrel','head'],['eye','Нүд','nud','eye'],['ent','Чих, хамар, хоолой','chhh','ear'],
   ['chest','Цээж, зүрх','zurh','heart'],['belly','Хэвлий, ходоод','dotor','belly'],['back','Нуруу, бэлхүүс','gemtel','spine'],
   ['limbs','Гар, хөл, үе','gemtel','bone'],['skin','Арьс','arisi','skin'],['uro','Шээс, бэлгийн эрхтэн','shees','drop'],
-  ['general','Бүх бие, халуурах','dotor','temp']
+  ['lung','Уушги, амьсгал','dotor','lung'],['general','Бүх бие, халуурах','dotor','temp']
 ];
 /* Preventive check-ups people come for without any complaint */
 const CHECKUPS=[
@@ -314,7 +338,7 @@ const DAYS=(()=>{const out=[],d=new Date();d.setHours(0,0,0,0);const t0=new Date
 const dayOf=k=>DAYS.find(x=>x.key===k)||{label:k,short:k};
 
 /* ---------- State ---------- */
-const blankForm=()=>({areas:[],duration:'',severity:0,age:0,sex:'',text:'',showText:false});
+const blankForm=()=>({areas:[],parts:[],duration:'',severity:0,age:0,sex:'',text:'',showText:false});
 const S={mode:'kiosk',screen:'home',hist:[],flow:null,plan:[],picks:[],deptId:null,doctorId:null,dayIdx:0,
   form:blankForm(),triageSource:null,urgency:'routine',idMethod:null,patient:{rd:'',phone:''},bookings:[],lastGroup:null,staffCalled:false,cancelArm:null};
 try{const b=JSON.parse(localStorage.getItem('zuvemch.bookings')||'[]');if(Array.isArray(b))S.bookings=b}catch(e){}
@@ -352,10 +376,15 @@ V.home=()=>({body:`
   </div>
   <button class="minelink" data-act="mybook">${icon('ticket',20)}Миний цаг${S.bookings.length?' ('+S.bookings.length+')':''}</button>`,foot:null});
 
-V.areas=()=>({body:`
-  <div><h1 class="q">Хаана тань өвдөж байна вэ?</h1><p class="sub">Хэд хэдэн газар бол бүгдийг нь сонгоно уу</p></div>
-  <div class="opts four">${AREAS.map(([k,t,,ic])=>`<button class="opt tile" data-act="area" data-k="${k}" aria-pressed="${S.form.areas.includes(k)}"><span class="ic">${icon(ic)}</span><span>${esc(t)}</span></button>`).join('')}</div>`,
-  foot:backBtn+`<button class="btn grow" data-act="to-details" ${S.form.areas.length?'':'disabled'}>Үргэлжлүүлэх</button>`});
+V.areas=()=>({cls:'tight',body:`
+  <h1 class="q">Хаана тань өвдөж байна вэ?</h1>
+  <div class="areawrap" id="areawrap">
+    <div class="bodypane"><div class="body3d" id="body3d" aria-label="Хүний биеийн 3D загвар"></div><div class="blabel" id="blabel"></div>
+      <div class="bctl"><button class="help" data-act="b-flip">Эргүүлэх</button>
+        <button class="help" data-act="b-inner" aria-pressed="${B3.inner}">Дотор эрхтэн</button></div></div>
+    <div class="opts compact">${AREAS.map(([k,t,,ic])=>`<button class="opt" data-act="area" data-k="${k}" aria-pressed="${S.form.areas.includes(k)}"><span class="ic">${icon(ic,22)}</span><span>${esc(t)}</span></button>`).join('')}</div>
+  </div>`,
+  foot:backBtn+`<button class="btn grow" data-act="to-details" ${S.form.areas.length?'':'disabled'}>Үргэлжлүүлэх${S.form.areas.length?' ('+S.form.areas.length+')':''}</button>`});
 
 V.details=()=>{const f=S.form;return {body:`
   <h1 class="q">Хэзээнээс эхэлсэн бэ?</h1>
@@ -466,6 +495,97 @@ function board(){const rows=[...SAMPLE.map(r=>({time:r[0],ticket:r[1],doctorId:r
     <td>${esc(d.name)}</td><td>${esc(dept(d.dept).name)}</td><td>${r.source}</td><td>${r.via}${r.sample?' · жишээ':''}</td></tr>`}).join('')}
   </tbody></table></div><p class="boardnote">Саарал мөрүүд нь жишээ өгөгдөл.</p></div>`}
 
+/* ---------- 3D body picker (three.js). One canvas, kept alive across re-renders ---------- */
+/* [id, name, area, position, radii, layer, mirrored]  layer: s = shell (see-through in organ view), f = always solid, o = organ.
+   The figure faces +z; +x is the patient's left. Every part uses the same colour; only selection is tinted. */
+const PARTDEF=[
+  ['head','Толгой','head',[0,1.63,0],[.1,.12,.105],'s'],
+  ['eye','нүд','eye',[.036,1.65,.088],[.02,.014,.014],'f',1],
+  ['ear','чих','ent',[.1,1.63,0],[.016,.032,.024],'f',1],
+  ['nose','Хамар','ent',[0,1.615,.102],[.016,.024,.02],'f'],
+  ['neck','Хоолой, хүзүү','ent',[0,1.49,0],[.05,.07,.05],'s'],
+  ['chest','Цээж','chest',[0,1.3,.022],[.17,.15,.1],'s'],
+  ['uback','Нуруу','back',[0,1.3,-.03],[.165,.15,.09],'s'],
+  ['belly','Хэвлий','belly',[0,1.07,.022],[.15,.125,.095],'s'],
+  ['lback','Бэлхүүс','back',[0,1.07,-.03],[.145,.125,.085],'s'],
+  ['pelvis','Аарцаг','uro',[0,.91,0],[.16,.09,.1],'s'],
+  ['shoulder','мөр','limbs',[.2,1.4,0],[.062,.06,.06],'f',1],
+  ['uarm','бугалга','limbs',[.235,1.23,0],[.045,.14,.048],'f',1],
+  ['elbow','тохой','limbs',[.25,1.08,0],[.04,.04,.04],'f',1],
+  ['farm','шуу','limbs',[.262,.94,.01],[.036,.125,.038],'f',1],
+  ['hand','гарын сарвуу','limbs',[.275,.78,.02],[.03,.07,.022],'f',1],
+  ['thigh','гуя','limbs',[.09,.68,0],[.075,.2,.08],'f',1],
+  ['knee','өвдөг','limbs',[.09,.47,.008],[.055,.055,.055],'f',1],
+  ['shin','шилбэ','limbs',[.09,.27,0],[.05,.18,.052],'f',1],
+  ['foot','хөлийн тавхай','limbs',[.09,.04,.05],[.045,.035,.11],'f',1],
+  ['brain','Тархи','head',[0,1.65,0],[.08,.07,.088],'o'],
+  ['lung','уушги','lung',[.075,1.33,0],[.058,.105,.06],'o',1],
+  ['heart','Зүрх','chest',[.02,1.3,.05],[.042,.052,.038],'o'],
+  ['liver','Элэг','belly',[-.06,1.15,.03],[.08,.048,.058],'o'],
+  ['stomach','Ходоод','belly',[.06,1.14,.04],[.052,.048,.042],'o'],
+  ['gut','Гэдэс','belly',[0,1.02,.03],[.105,.068,.058],'o'],
+  ['kidney','бөөр','uro',[.065,1.1,-.045],[.028,.042,.024],'o',1],
+  ['bladder','Давсаг','uro',[0,.92,.04],[.04,.034,.034],'o']
+];
+const PART={};
+PARTDEF.forEach(([id,name,area,pos,rad,layer,mir])=>{
+  if(mir){PART[id+'L']={name:'Зүүн '+name,area,layer,pos,rad};PART[id+'R']={name:'Баруун '+name,area,layer,pos:[-pos[0],pos[1],pos[2]],rad}}
+  else PART[id]={name,area,layer,pos,rad}});
+const B3={ready:false,failed:false,inner:false,yaw:.45,target:.45,hover:null,last:null,drag:null,raf:0};
+
+function initBody(){if(B3.ready||B3.failed)return;
+  if(!window.THREE){B3.failed=true;return}
+  try{const T=THREE,r=new T.WebGLRenderer({antialias:true,alpha:true});r.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+    const scene=new T.Scene(),cam=new T.PerspectiveCamera(30,1,.1,20);cam.position.set(0,1,4.1);cam.lookAt(0,1,0);
+    scene.add(new T.HemisphereLight(0xffffff,0x8a97a6,.95));const sun=new T.DirectionalLight(0xffffff,.55);sun.position.set(1.2,2.4,3);scene.add(sun);
+    const fig=new T.Group(),geo=new T.SphereGeometry(1,28,20);scene.add(fig);
+    for(const id in PART){const p=PART[id],m=new T.Mesh(geo,new T.MeshStandardMaterial({roughness:.8,metalness:0}));
+      m.position.set(...p.pos);m.scale.set(...p.rad);m.userData.id=id;m.renderOrder=p.layer==='s'?2:1;p.mesh=m;fig.add(m)}
+    Object.assign(B3,{r,scene,cam,fig,ray:new T.Raycaster(),cBody:new T.Color(),cAcc:new T.Color(),ready:true});
+    const el=r.domElement;
+    el.addEventListener('pointerdown',e=>{B3.drag={x:e.clientX,yaw:B3.yaw,moved:0};try{el.setPointerCapture(e.pointerId)}catch(_){}});
+    el.addEventListener('pointermove',e=>{const d=B3.drag;
+      if(d){const dx=e.clientX-d.x;d.moved=Math.max(d.moved,Math.abs(dx));if(d.moved>5){B3.yaw=B3.target=d.yaw+dx*.012;drawBody()}}
+      else if(e.pointerType==='mouse'){const id=pickAt(e);if(id!==B3.hover){B3.hover=id;setLabel();paintBody()}}});
+    el.addEventListener('pointerup',e=>{const d=B3.drag;B3.drag=null;if(d&&d.moved<=5){const id=pickAt(e);if(id){togglePart(id);B3.last=id;render()}}});
+    el.addEventListener('pointercancel',()=>{B3.drag=null});
+    el.addEventListener('pointerleave',()=>{if(B3.hover){B3.hover=null;setLabel();paintBody()}});
+  }catch(e){B3.failed=true}}
+
+function pickAt(e){const el=B3.r.domElement,b=el.getBoundingClientRect();
+  B3.ray.setFromCamera({x:(e.clientX-b.left)/b.width*2-1,y:-((e.clientY-b.top)/b.height)*2+1},B3.cam);
+  const hit=B3.ray.intersectObjects(Object.values(PART).filter(p=>p.pick).map(p=>p.mesh))[0];return hit?hit.object.userData.id:null}
+
+function paintBody(){if(!B3.ready)return;const f=S.form;
+  for(const id in PART){const p=PART[id],m=p.mesh,mat=m.material,ghost=p.layer==='s'&&B3.inner;
+    m.visible=p.layer==='o'?B3.inner:true;p.pick=m.visible&&!ghost;
+    if(mat.transparent!==ghost){mat.transparent=ghost;mat.depthWrite=!ghost;mat.needsUpdate=true}
+    const sel=f.parts.includes(id),soft=!sel&&f.areas.includes(p.area)&&!f.parts.some(x=>PART[x].area===p.area)&&p.layer!=='o';
+    mat.opacity=ghost?(sel||soft?.3:.13):1;
+    mat.color.copy(B3.cBody);if(sel)mat.color.copy(B3.cAcc);else if(soft)mat.color.lerp(B3.cAcc,.45);
+    if(B3.hover===id&&!sel)mat.color.lerp(B3.cAcc,.28)}
+  drawBody()}
+
+function drawBody(){if(!B3.ready)return;cancelAnimationFrame(B3.raf);
+  const step=()=>{const d=B3.target-B3.yaw;if(Math.abs(d)>.003){B3.yaw+=d*.2;B3.raf=requestAnimationFrame(step)}else B3.yaw=B3.target;
+    B3.fig.rotation.y=B3.yaw;B3.r.render(B3.scene,B3.cam)};step()}
+
+function setLabel(){const el=$('#blabel');if(!el)return;const id=B3.hover||(S.form.parts.includes(B3.last)?B3.last:null);
+  el.innerHTML=id?`<span class="${S.form.parts.includes(id)?'on':''}">${esc(PART[id].name)}</span>`:'<span>Дарж сонгоно · Чирж эргүүлнэ</span>'}
+
+function mountBody(){const host=$('#body3d');if(!host)return;initBody();
+  if(B3.failed){host.parentElement.hidden=true;$('#areawrap').classList.add('no3d');return}
+  host.appendChild(B3.r.domElement);const w=host.clientWidth||300,h=host.clientHeight||400;
+  B3.r.setSize(w,h,false);B3.cam.aspect=w/h;B3.cam.updateProjectionMatrix();
+  const cs=getComputedStyle(document.documentElement);
+  B3.cBody.set(cs.getPropertyValue('--body').trim()||'#c5ced8');B3.cAcc.set(cs.getPropertyValue('--accent').trim()||'#1b63b5');
+  setLabel();paintBody()}
+window.addEventListener('resize',()=>{if($('#body3d'))mountBody()});
+
+function togglePart(id){const f=S.form,a=PART[id].area,i=f.parts.indexOf(id);
+  if(i<0){f.parts.push(id);if(!f.areas.includes(a))f.areas.push(a)}
+  else{f.parts.splice(i,1);if(!f.parts.some(x=>PART[x].area===a))f.areas=f.areas.filter(k=>k!==a)}}
+
 /* ---------- Render ---------- */
 let timer=null;
 function render(){
@@ -480,9 +600,10 @@ function render(){
       <div class="dhead">${atHome?'':`<button class="iconback" data-act="back" aria-label="Буцах">${icon('back',24)}</button>`}<span class="name">Демо эмнэлэг</span>${atHome?'':'<button class="help" data-act="home">Эхлэл</button>'}</div>`;
   st.innerHTML=`<div class="device ${S.mode}">${head}
     ${pr?`<div class="progress"><i style="width:${pr*100}%"></i></div>`:''}
-    <section class="content" id="content">${S.helpMsg?'<div class="okmsg">Ажилтан ирж байна</div>':''}${v.body}</section>
+    <section class="content ${v.cls||''}" id="content">${S.helpMsg?'<div class="okmsg">Ажилтан ирж байна</div>':''}${v.body}</section>
     ${v.foot?`<div class="foot">${v.foot}</div>`:''}</div>`;
   S.helpMsg=false;
+  if(S.screen==='areas')mountBody();
   if(S.screen==='ticket'&&S.mode==='kiosk'){let s=30;const tick=()=>{const c=$('#cd');if(c)c.textContent=s+' сек дараа эхлэл рүү буцна.';if(s--<=0)home()};tick();timer=setInterval(tick,1000)}
 }
 
@@ -502,7 +623,7 @@ Departments (id: name — scope):
 ${DEPTS.map(d=>`${d.id}: ${d.name} — ${d.desc}`).join('\n')}
 The patient may have several unrelated problems (e.g. a broken arm and a skin rash) and then needs one department per problem, at most 3. Under 16 → only huuhed. Unclear → dotor.
 urgency: "emergency" only if the ER is needed now; "soon" within 1-2 days; else "routine".
-Patient: areas: ${f.areas.map(a=>AREAS.find(x=>x[0]===a)[1]).join(', ')}; since: ${f.duration}; severity: ${f.severity}/10; age about ${f.age}; sex: ${f.sex}; own words: ${f.text||'(none)'}
+Patient: areas: ${f.areas.map(a=>AREAS.find(x=>x[0]===a)[1]).join(', ')}; exact spots picked on a body model: ${f.parts.map(p=>PART[p].name).join(', ')||'-'}; since: ${f.duration}; severity: ${f.severity}/10; age about ${f.age}; sex: ${f.sex}; own words: ${f.text||'(none)'}
 Reply with JSON only: {"departments":["<id>",...],"urgency":"routine|soon|emergency"}`;
   try{const r=await s(prompt,{modelTier:'quick'}),m=(r&&r.text||'').match(/\{[\s\S]*\}/);if(!m)return null;const j=JSON.parse(m[0]);
     const ds=(Array.isArray(j.departments)?j.departments:[]).filter(dept).filter((x,i,a)=>a.indexOf(x)===i).slice(0,3);if(!ds.length)return null;
@@ -532,7 +653,7 @@ function book(viaCard){const e=$('#ptErr');
 
 /* ---------- Events ---------- */
 function toReview(){S.hist=S.hist.filter(s=>!['slots','doctors','depts','review'].includes(s));S.screen='review';render()}
-function toggleArea(k){const a=S.form.areas,i=a.indexOf(k);i<0?a.push(k):a.splice(i,1)}
+function toggleArea(k){const f=S.form,i=f.areas.indexOf(k);if(i<0)f.areas.push(k);else{f.areas.splice(i,1);f.parts=f.parts.filter(p=>PART[p].area!==k)}}
 document.addEventListener('click',ev=>{
   const m=ev.target.closest('[data-mode]');if(m){S.mode=m.dataset.mode;render();return}
   const a=ev.target.closest('[data-act]');if(!a)return;const x=a.dataset;
@@ -545,6 +666,8 @@ document.addEventListener('click',ev=>{
     case 'start-direct':S.flow='direct';S.picks=[];go('depts');break;
     case 'mybook':S.cancelArm=null;go('mybook');break;
     case 'area':toggleArea(x.k);render();break;
+    case 'b-flip':B3.target+=Math.PI;drawBody();break;
+    case 'b-inner':B3.inner=!B3.inner;B3.hover=null;render();break;
     case 'to-details':go('details');break;
     case 'dur':S.form.duration=x.k;render();break;
     case 'sev':S.form.severity=+x.v;render();break;
