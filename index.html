@@ -116,6 +116,8 @@ svg{display:block}
 .blabel{position:absolute;top:12px;left:12px;right:12px;text-align:center;font-weight:600;font-size:.8em;pointer-events:none}
 .blabel span{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 14px;display:inline-block}
 .blabel span.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.credit{position:absolute;right:10px;bottom:62px;font-size:.6em;color:#8fb3e0;opacity:.75;text-decoration:none}
+.credit:hover{opacity:1;text-decoration:underline}
 .bctl{display:flex;gap:8px;justify-content:center;padding:10px;border-top:1px solid var(--line);background:var(--surface)}
 .bctl .help{min-width:48px;min-height:40px;font-size:.8em;white-space:nowrap;padding:6px 12px}
 .bctl .zoom{font-size:1.2em;line-height:1;padding:4px 0}
@@ -250,6 +252,7 @@ tr.sample td{color:var(--muted)}
 <main class="stage" id="stage"></main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script>
 /* ---------- Icons (24px line) ---------- */
 const P={
@@ -381,6 +384,7 @@ V.areas=()=>({cls:'tight',body:`
   <h1 class="q">Хаана тань өвдөж байна вэ?</h1>
   <div class="areawrap" id="areawrap">
     <div class="bodypane"><div class="body3d" id="body3d" aria-label="Хүний биеийн 3D загвар"></div><div class="blabel" id="blabel"></div>
+      <a class="credit" id="bcredit" href="https://hubmapconsortium.github.io/ccf/" target="_blank" rel="noopener" hidden>3D: HuBMAP CCF · CC BY 4.0</a>
       <div class="bctl"><button class="help zoom" data-act="b-out" aria-label="Жижигрүүлэх">−</button>
         <button class="help zoom" data-act="b-in" aria-label="Томруулах">+</button>
         <button class="help" data-act="b-back">Ар тал</button>
@@ -506,14 +510,14 @@ const PINFO=[['head','Толгой','head','s'],['eye','нүд','eye','s',1],['e
   ['shoulder','мөр','limbs','s',1],['uarm','бугалга','limbs','s',1],['elbow','тохой','limbs','s',1],['farm','шуу','limbs','s',1],['hand','гарын сарвуу','limbs','s',1],
   ['thigh','гуя','limbs','s',1],['knee','өвдөг','limbs','s',1],['shin','шилбэ','limbs','s',1],['foot','хөлийн тавхай','limbs','s',1],
   ['brain','Тархи','head','o'],['throat','Хоолой, бамбай','ent','o'],['lung','уушги','lung','o',1],['heart','Зүрх','chest','o'],['liver','Элэг','belly','o'],
-  ['stomach','Ходоод','belly','o'],['spleen','Дэлүү','belly','o'],['kidney','бөөр','uro','o',1],['colon','Бүдүүн гэдэс','belly','o'],['sgut','Нарийн гэдэс','belly','o'],['bladder','Давсаг','uro','o']];
+  ['stomach','Ходоод','belly','o'],['spleen','Дэлүү','belly','o'],['kidney','бөөр','uro','o',1],['colon','Бүдүүн гэдэс','belly','o'],['sgut','Нарийн гэдэс','belly','o'],['bladder','Давсаг','uro','o'],['pancreas','Нойр булчирхай','belly','o']];
 const PART={};
 PINFO.forEach(([id,name,area,layer,mir])=>{
   if(mir){PART[id+'L']={name:'Зүүн '+name,area,layer,meshes:[]};PART[id+'R']={name:'Баруун '+name,area,layer,meshes:[]}}
   else PART[id]={name,area,layer,meshes:[]}});
 const HOMEVIEW={yaw:.3,pitch:.04,d:4.1,tx:0,ty:.98,tz:0};
 const B3={ready:false,failed:false,hover:null,last:null,gest:null,pinch:null,raf:0,v:{...HOMEVIEW},g:{...HOMEVIEW}};
-const XR={shell:[0x1848c8,0x9fd8ff,.2,.96],organ:[0x4a98ee,0xe2f6ff,1,1],sel:[0xff9a1f,0xffe9bd],soft:0xff9a1f};
+const XR={shell:[0x1848c8,0x9fd8ff,.2,.96],organ:[0x3f8fe8,0xbfe6ff,1,1],organReal:[0x2f7fe0,0x9fd6ff,.16,.62],sel:[0xff9a1f,0xffe9bd],soft:0xff9a1f};
 
 /* Catmull-Rom through rings of [x, y, z, radiusA, radiusB], k samples per span */
 function smoothRings(R,k){const out=[],n=R.length,P=i=>R[Math.max(0,Math.min(n-1,i))];
@@ -599,20 +603,21 @@ function initBody(){if(B3.ready||B3.failed)return;
       uniforms:{uBase:{value:new T.Color()},uRim:{value:new T.Color()},uA:{value:new T.Vector2(1,1)}},
       vertexShader:'varying vec3 vN;varying vec3 vV;void main(){vec4 mv=modelViewMatrix*vec4(position,1.0);vN=normalMatrix*normal;vV=-mv.xyz;gl_Position=projectionMatrix*mv;}',
       fragmentShader:'uniform vec3 uBase;uniform vec3 uRim;uniform vec2 uA;varying vec3 vN;varying vec3 vV;void main(){float f=pow(1.0-abs(dot(normalize(vN),normalize(vV))),1.4);gl_FragColor=vec4(mix(uBase,uRim,f),mix(uA.x,uA.y,f));}'});
-    const hide=new T.MeshBasicMaterial({colorWrite:false,side:T.DoubleSide});
+    /* Transparent so it is drawn in the same pass as the (transparent) organs, after them by renderOrder */
+    const hide=new T.MeshBasicMaterial({colorWrite:false,side:T.DoubleSide,transparent:true,depthWrite:true});
     buildBody(T,(id,geo,pos,rad,rz)=>{const p=PART[id],organ=p.layer==='o',m=new T.Mesh(geo,glow(organ));
       if(pos){m.position.set(...pos);m.scale.set(...rad);m.rotation.z=rz||0}
       m.userData.id=id;m.renderOrder=organ?0:2;scene.add(m);p.meshes.push(m);
       /* Depth-only copy of each skin piece, drawn after the organs: only the nearest skin surface is then shaded */
-      if(!organ){const pre=new T.Mesh(geo,hide);pre.position.copy(m.position);pre.scale.copy(m.scale);pre.rotation.copy(m.rotation);pre.renderOrder=1;scene.add(pre)}});
-    Object.assign(B3,{r,scene,cam,ray:new T.Raycaster(),tmp:new T.Color(),ready:true,
+      if(!organ){const pre=new T.Mesh(geo,hide);pre.position.copy(m.position);pre.scale.copy(m.scale);pre.rotation.copy(m.rotation);pre.renderOrder=1;scene.add(pre);m.userData.pre=pre}});
+    Object.assign(B3,{r,scene,cam,glow,hide,ray:new T.Raycaster(),tmp:new T.Color(),ready:true,
       organs:Object.values(PART).filter(p=>p.layer==='o').flatMap(p=>p.meshes),shell:Object.values(PART).filter(p=>p.layer!=='o').flatMap(p=>p.meshes)});
     const el=r.domElement,pts=new Map();
     const two=()=>{const [a,b]=[...pts.values()];return {dist:Math.hypot(a.x-b.x,a.y-b.y)||1,cx:(a.x+b.x)/2,cy:(a.y+b.y)/2}};
     el.addEventListener('pointerdown',e=>{try{el.setPointerCapture(e.pointerId)}catch(_){}pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
       if(pts.size===1)B3.gest={moved:0,multi:false,pan:e.button===2||e.shiftKey};else{if(B3.gest)B3.gest.multi=true;B3.pinch=two()}});
     el.addEventListener('pointermove',e=>{const prev=pts.get(e.pointerId),g=B3.gest;
-      if(!prev||!g){if(e.pointerType==='mouse'){const id=pickAt(e);if(id!==B3.hover){B3.hover=id;setLabel();paintBody()}}return}
+      if(!prev||!g){if(e.pointerType==='mouse'&&performance.now()-(B3.hoverAt||0)>90){B3.hoverAt=performance.now();const id=pickAt(e);if(id!==B3.hover){B3.hover=id;setLabel();paintBody()}}return}
       const dx=e.clientX-prev.x,dy=e.clientY-prev.y;pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
       if(pts.size===1){g.moved+=Math.abs(dx)+Math.abs(dy);if(g.moved>6){
           if(g.pan)panBy(dx,dy);else{B3.g.yaw-=dx*.01;B3.g.pitch=Math.max(-1.45,Math.min(1.45,B3.g.pitch+dy*.01))}
@@ -624,7 +629,86 @@ function initBody(){if(B3.ready||B3.failed)return;
     el.addEventListener('pointerleave',()=>{if(B3.hover){B3.hover=null;setLabel();paintBody()}});
     el.addEventListener('wheel',e=>{e.preventDefault();zoomAt(Math.exp(e.deltaY*.0015),e.clientX,e.clientY);Object.assign(B3.v,B3.g);drawBody()},{passive:false});
     el.addEventListener('contextmenu',e=>e.preventDefault());
+    loadReal(T);
   }catch(e){B3.failed=true}}
+
+/* ---------- Scanned anatomy (HuBMAP CCF v1.2, Visible Human male, CC BY 4.0), loaded straight from HuBMAP's GitHub ----------
+   Skin and organs share one frame: metres, +y up, +x the patient's left, +z the front, origin at mid-height (feet at y = -0.915).
+   If a file cannot be fetched, the hand-built figure above stays in its place. */
+const REAL_URL='https://raw.githubusercontent.com/hubmapconsortium/ccf-releases/main/v1.2/models/';
+const REAL_FILES=[['VH_M_Skin','skin'],['VH_M_Lung','lung'],['VH_M_Heart','heart'],['VH_M_Liver','liver'],['VH_M_Spleen','spleen'],['VH_M_Pancreas','pancreas'],
+  ['VH_M_Kidney_L','kidneyL'],['VH_M_Kidney_R','kidneyR'],['VH_M_Small_Intestine','sgut'],['SBU_M_Intestine_Large','colon'],['VH_M_Urinary_Bladder','bladder']];
+const REAL_LIFT=.915;
+/* Hand-built organs the scan set lacks, nudged to sit with the scanned ones */
+const KEEP_SHIFT={brain:[0,.035,.015],throat:[0,.075,0],stomach:[0,.115,-.005]};
+const SKINREG=['head','neck','chest','uback','belly','lback','pelvis','eyeL','eyeR','earL','earR','nose',
+  ...['shoulder','uarm','elbow','farm','hand','thigh','knee','shin','foot'].flatMap(k=>[k+'L',k+'R'])];
+
+/* Which body region a skin point (feet at y = 0) belongs to */
+function skinRegion(x,y,z){const ax=Math.abs(x),S=x>=0?'L':'R';
+  if(y>1.6){
+    if(z>.105&&ax<.022&&y>1.655&&y<1.725)return 'nose';
+    if(z>.075&&ax>.014&&ax<.055&&y>1.71&&y<1.755)return 'eye'+S;
+    if(ax>.062&&Math.abs(z)<.045&&y>1.66&&y<1.77)return 'ear'+S;
+    return 'head'}
+  const tw=y>1.3?.2:y>1.02?.175:.215;
+  if(y>.86&&ax>tw){const d=Math.hypot(ax-.2,y-1.5);
+    return (d<.11?'shoulder':d<.33?'uarm':d<.39?'elbow':d<.6?'farm':'hand')+S}
+  if(y>1.525)return 'neck';
+  if(y<.83)return (y>.56?'thigh':y>.44?'knee':y>.085?'shin':'foot')+S;
+  if(y<.99)return 'pelvis';
+  const front=z>.012;
+  if(y<1.2)return front?'belly':'lback';
+  return front?'chest':'uback'}
+
+function skinMaterial(T){const n=SKINREG.length;
+  return new T.ShaderMaterial({transparent:true,depthWrite:false,side:T.DoubleSide,
+    uniforms:{uBase:{value:new T.Color(XR.shell[0])},uRim:{value:new T.Color(XR.shell[1])},uSel:{value:new T.Color(XR.sel[0])},uSelRim:{value:new T.Color(XR.sel[1])},
+      uSoft:{value:new T.Color(XR.soft)},uA:{value:new T.Vector2(XR.shell[2],XR.shell[3])},uState:{value:new Array(n).fill(0)}},
+    vertexShader:`attribute float aRegion;uniform float uState[${n}];varying vec3 vN;varying vec3 vV;varying vec3 vS;
+      void main(){float s=uState[int(aRegion+.5)];vS=vec3(step(.5,s)*step(s,1.5),step(1.5,s)*step(s,2.5),step(2.5,s));
+      vec4 mv=modelViewMatrix*vec4(position,1.0);vN=normalMatrix*normal;vV=-mv.xyz;gl_Position=projectionMatrix*mv;}`,
+    fragmentShader:`uniform vec3 uBase;uniform vec3 uRim;uniform vec3 uSel;uniform vec3 uSelRim;uniform vec3 uSoft;uniform vec2 uA;varying vec3 vN;varying vec3 vV;varying vec3 vS;
+      void main(){float f=pow(1.0-abs(dot(normalize(vN),normalize(vV))),1.4);
+      vec3 b=mix(mix(uBase,uSoft,vS.y*.6),uSel,vS.x);b=mix(b,vec3(1.0),vS.z*.3);vec3 r=mix(uRim,uSelRim,vS.x);
+      float a0=uA.x+vS.x*.4+vS.y*.18+vS.z*.1;gl_FragColor=vec4(mix(b,r,f),mix(a0,uA.y,f));}`})}
+
+/* Organs glow additively, like light through tissue, so inner structures (heart valves, lung segments) show through */
+function organMaterial(T){const m=B3.glow(false);m.blending=T.AdditiveBlending;m.depthWrite=false;return m}
+
+function loadReal(T){if(!T.GLTFLoader)return;const L=new T.GLTFLoader(),got={};let left=REAL_FILES.length;
+  B3.loading=0;setLabel();
+  REAL_FILES.forEach(([file,id])=>L.load(REAL_URL+file+'.glb',g=>{got[id]=g.scene;done()},undefined,()=>done()));
+  function done(){left--;B3.loading=Math.round((1-left/REAL_FILES.length)*100);setLabel();if(left)return;B3.loading=null;
+    if(got.skin)try{useReal(T,got)}catch(e){console.warn('3D загвар', e)}
+    setLabel();paintBody()}}
+
+function useReal(T,got){const scene=B3.scene,drop=m=>{scene.remove(m);if(m.userData.pre)scene.remove(m.userData.pre)};
+  const root=new T.Group();root.position.y=REAL_LIFT;scene.add(root);
+  /* Skin: one mesh, tagged per vertex with its body region */
+  let skin;got.skin.traverse(o=>{if(o.isMesh&&!skin)skin=o});
+  root.add(got.skin);root.updateMatrixWorld(true);
+  const geo=skin.geometry.clone().applyMatrix4(skin.matrixWorld).applyMatrix4(new T.Matrix4().makeTranslation(0,-REAL_LIFT,0));
+  geo.computeVertexNormals();
+  const pos=geo.attributes.position,reg=new Float32Array(pos.count);
+  for(let i=0;i<pos.count;i++){const id=skinRegion(pos.getX(i),pos.getY(i)+REAL_LIFT,pos.getZ(i));reg[i]=SKINREG.indexOf(id)}
+  geo.setAttribute('aRegion',new T.BufferAttribute(reg,1));
+  root.remove(got.skin);
+  const sm=new T.Mesh(geo,skinMaterial(T));sm.userData.skin=true;sm.renderOrder=2;root.add(sm);
+  const pre=new T.Mesh(geo,B3.hide);pre.renderOrder=1;root.add(pre);
+  for(const id in PART)if(PART[id].layer!=='o'){PART[id].meshes.forEach(drop);PART[id].meshes=[]}
+  B3.skin=sm;
+  /* Organs: replace the hand-built ones that have a scanned counterpart */
+  const add=(id,scn,split)=>{const ids=split?[id+'L',id+'R']:[id];ids.forEach(k=>{PART[k].meshes.forEach(drop);PART[k].meshes=[]});
+    const mats={};ids.forEach(k=>mats[k]=organMaterial(T));const list=[];scn.traverse(o=>{if(o.isMesh)list.push(o)});
+    root.add(scn);root.updateMatrixWorld(true);
+    list.forEach(o=>{let k=id;
+      if(split){const c=new T.Vector3();o.geometry.computeBoundingBox();o.geometry.boundingBox.getCenter(c).applyMatrix4(o.matrixWorld);k=id+(c.x>=0?'L':'R')}
+      o.material=mats[k];o.userData.id=k;o.renderOrder=0;PART[k].meshes.push(o)})};
+  REAL_FILES.forEach(([,id])=>{if(id!=='skin'&&got[id])add(id,got[id],id==='lung')});
+  for(const id in KEEP_SHIFT)PART[id].meshes.forEach(m=>m.position.add(new T.Vector3(...KEEP_SHIFT[id])));
+  B3.real=true;B3.organs=Object.values(PART).filter(p=>p.layer==='o').flatMap(p=>p.meshes);B3.shell=[sm];
+  const c=$('#bcredit');if(c)c.hidden=false}
 
 /* Camera basis for the goal view, and world units per screen pixel at the orbit centre */
 function camAxes(){const g=B3.g,h=B3.r.domElement.clientHeight||384;
@@ -639,16 +723,22 @@ function zoomBy(f){if(!B3.ready)return;B3.g.d=Math.max(.7,Math.min(5.5,B3.g.d*f)
 
 function pickAt(e){const b=B3.r.domElement.getBoundingClientRect();
   B3.ray.setFromCamera({x:(e.clientX-b.left)/b.width*2-1,y:-((e.clientY-b.top)/b.height)*2+1},B3.cam);
-  const hit=B3.ray.intersectObjects(B3.organs)[0]||B3.ray.intersectObjects(B3.shell)[0];return hit?hit.object.userData.id:null}
+  /* Organs win over the skin above them, except eyes, ears and nose, which have nothing behind them worth picking */
+  const sk=B3.ray.intersectObjects(B3.shell)[0],skin=sk&&sk.object.userData.skin?SKINREG[sk.object.geometry.attributes.aRegion.getX(sk.face.a)]:sk&&sk.object.userData.id;
+  if(skin&&/^(eye|ear|nose)/.test(skin))return skin;
+  const org=B3.ray.intersectObjects(B3.organs)[0];return org?org.object.userData.id:skin||null}
 
 function paintBody(){if(!B3.ready)return;const f=S.form;
   for(const id in PART){const p=PART[id],organ=p.layer==='o',base=organ?XR.organ:XR.shell;
     const sel=f.parts.includes(id),soft=!sel&&!organ&&f.areas.includes(p.area)&&!f.parts.some(x=>PART[x].area===p.area);
+    const b=organ&&B3.real?XR.organReal:base;
     p.meshes.forEach(m=>{const u=m.material.uniforms;
-      u.uBase.value.setHex(sel?XR.sel[0]:base[0]);u.uRim.value.setHex(sel?XR.sel[1]:base[1]);
+      u.uBase.value.setHex(sel?XR.sel[0]:b[0]);u.uRim.value.setHex(sel?XR.sel[1]:b[1]);
       if(soft)u.uBase.value.lerp(B3.tmp.setHex(XR.soft),.6);
       if(B3.hover===id&&!sel){u.uBase.value.lerp(B3.tmp.setHex(0xffffff),.3)}
-      u.uA.value.set(organ?1:sel?.6:soft?.38:B3.hover===id?.3:base[2],base[3])})}
+      u.uA.value.set(organ?(B3.real?(sel?.8:B3.hover===id?.3:b[2]):1):sel?.6:soft?.38:B3.hover===id?.3:base[2],organ&&B3.real&&!sel?b[3]:base[3])})}
+  if(B3.skin){const st=B3.skin.material.uniforms.uState.value;
+    SKINREG.forEach((id,i)=>{const a=PART[id].area;st[i]=f.parts.includes(id)?1:(f.areas.includes(a)&&!f.parts.some(x=>PART[x].area===a))?2:B3.hover===id?3:0})}
   drawBody()}
 
 function drawBody(){if(!B3.ready)return;cancelAnimationFrame(B3.raf);
@@ -658,12 +748,14 @@ function drawBody(){if(!B3.ready)return;cancelAnimationFrame(B3.raf);
     B3.cam.lookAt(v.tx,v.ty,v.tz);B3.r.render(B3.scene,B3.cam);if(far)B3.raf=requestAnimationFrame(step)};step()}
 
 function setLabel(){const el=$('#blabel');if(!el)return;const id=B3.hover||(S.form.parts.includes(B3.last)?B3.last:null);
-  el.innerHTML=id?`<span class="${S.form.parts.includes(id)?'on':''}">${esc(PART[id].name)}</span>`:'<span>Дарж сонгоно · Чирж эргүүлнэ</span>'}
+  el.innerHTML=id?`<span class="${S.form.parts.includes(id)?'on':''}">${esc(PART[id].name)}</span>`
+    :B3.loading!=null?`<span>Загвар ачаалж байна… ${B3.loading}%</span>`:'<span>Дарж сонгоно · Чирж эргүүлнэ</span>'}
 
 function mountBody(){const host=$('#body3d');if(!host)return;initBody();
   if(B3.failed){host.parentElement.hidden=true;$('#areawrap').classList.add('no3d');return}
   host.appendChild(B3.r.domElement);const w=host.clientWidth||300,h=host.clientHeight||384;
   B3.r.setSize(w,h,false);B3.cam.aspect=w/h;B3.cam.updateProjectionMatrix();
+  const c=$('#bcredit');if(c)c.hidden=!B3.real;
   setLabel();paintBody()}
 window.addEventListener('resize',()=>{if($('#body3d'))mountBody()});
 
