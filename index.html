@@ -617,17 +617,17 @@ function initBody(){if(B3.ready||B3.failed)return;
     el.addEventListener('pointerdown',e=>{try{el.setPointerCapture(e.pointerId)}catch(_){}pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
       if(pts.size===1)B3.gest={moved:0,multi:false,pan:e.button===2||e.shiftKey};else{if(B3.gest)B3.gest.multi=true;B3.pinch=two()}});
     el.addEventListener('pointermove',e=>{const prev=pts.get(e.pointerId),g=B3.gest;
-      if(!prev||!g){if(e.pointerType==='mouse'&&performance.now()-(B3.hoverAt||0)>90){B3.hoverAt=performance.now();const id=pickAt(e);if(id!==B3.hover){B3.hover=id;setLabel();paintBody()}}return}
+      if(!prev||!g){if(e.pointerType==='mouse'&&performance.now()-(B3.hoverAt||0)>60&&performance.now()-(B3.moveAt||0)>300){B3.hoverAt=performance.now();const id=pickAt(e);if(id!==B3.hover){B3.hover=id;setLabel();paintBody()}}return}
       const dx=e.clientX-prev.x,dy=e.clientY-prev.y;pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
       if(pts.size===1){g.moved+=Math.abs(dx)+Math.abs(dy);if(g.moved>6){
           if(g.pan)panBy(dx,dy);else{B3.g.yaw-=dx*.01;B3.g.pitch=Math.max(-1.45,Math.min(1.45,B3.g.pitch+dy*.01))}
-          Object.assign(B3.v,B3.g);drawBody()}}
-      else if(pts.size===2){const n=two(),o=B3.pinch||n;zoomAt(o.dist/n.dist,n.cx,n.cy);panBy(n.cx-o.cx,n.cy-o.cy);B3.pinch=n;Object.assign(B3.v,B3.g);drawBody()}});
+          Object.assign(B3.v,B3.g);moving();drawBody()}}
+      else if(pts.size===2){const n=two(),o=B3.pinch||n;zoomAt(o.dist/n.dist,n.cx,n.cy);panBy(n.cx-o.cx,n.cy-o.cy);B3.pinch=n;Object.assign(B3.v,B3.g);moving();drawBody()}});
     const end=e=>{const g=B3.gest;pts.delete(e.pointerId);if(pts.size<2)B3.pinch=null;if(pts.size)return;B3.gest=null;
       if(e.type==='pointerup'&&g&&!g.multi&&g.moved<=6){const id=pickAt(e);if(id){togglePart(id);B3.last=id;render()}}};
     el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end);
     el.addEventListener('pointerleave',()=>{if(B3.hover){B3.hover=null;setLabel();paintBody()}});
-    el.addEventListener('wheel',e=>{e.preventDefault();zoomAt(Math.exp(e.deltaY*.0015),e.clientX,e.clientY);Object.assign(B3.v,B3.g);drawBody()},{passive:false});
+    el.addEventListener('wheel',e=>{e.preventDefault();zoomAt(Math.exp(e.deltaY*.0015),e.clientX,e.clientY);Object.assign(B3.v,B3.g);moving();drawBody()},{passive:false});
     el.addEventListener('contextmenu',e=>e.preventDefault());
     loadReal(T);
   }catch(e){B3.failed=true}}
@@ -635,7 +635,8 @@ function initBody(){if(B3.ready||B3.failed)return;
 /* ---------- Scanned anatomy (HuBMAP CCF v1.2, Visible Human male, CC BY 4.0), loaded straight from HuBMAP's GitHub ----------
    Skin and organs share one frame: metres, +y up, +x the patient's left, +z the front, origin at mid-height (feet at y = -0.915).
    If a file cannot be fetched, the hand-built figure above stays in its place. */
-const REAL_URL='https://raw.githubusercontent.com/hubmapconsortium/ccf-releases/main/v1.2/models/';
+/* jsDelivr pinned to one HuBMAP commit: brotli-compressed (about 40% smaller) and cached by the browser for a year */
+const REAL_URL='https://cdn.jsdelivr.net/gh/hubmapconsortium/ccf-releases@b036a91aaf7234f462b1249d4a5f4fb0e982f412/v1.2/models/';
 const REAL_FILES=[['VH_M_Skin','skin'],['VH_M_Lung','lung'],['VH_M_Heart','heart'],['VH_M_Liver','liver'],['VH_M_Spleen','spleen'],['VH_M_Pancreas','pancreas'],
   ['VH_M_Kidney_L','kidneyL'],['VH_M_Kidney_R','kidneyR'],['VH_M_Small_Intestine','sgut'],['SBU_M_Intestine_Large','colon'],['VH_M_Urinary_Bladder','bladder']];
 const REAL_LIFT=.915;
@@ -676,39 +677,49 @@ function skinMaterial(T){const n=SKINREG.length;
 /* Organs glow additively, like light through tissue, so inner structures (heart valves, lung segments) show through */
 function organMaterial(T){const m=B3.glow(false);m.blending=T.AdditiveBlending;m.depthWrite=false;return m}
 
-function loadReal(T){if(!T.GLTFLoader)return;const L=new T.GLTFLoader(),got={};let left=REAL_FILES.length;
+function loadReal(T){if(!T.GLTFLoader)return;const L=new T.GLTFLoader(),wait=[];let left=REAL_FILES.length;
   B3.loading=0;setLabel();
-  REAL_FILES.forEach(([file,id])=>L.load(REAL_URL+file+'.glb',g=>{got[id]=g.scene;done()},undefined,()=>done()));
-  function done(){left--;B3.loading=Math.round((1-left/REAL_FILES.length)*100);setLabel();if(left)return;B3.loading=null;
-    if(got.skin)try{useReal(T,got)}catch(e){console.warn('3D загвар', e)}
-    setLabel();paintBody()}}
+  const show=(id,scn)=>{try{if(id==='skin')useSkin(T,scn);else if(B3.real)useOrgan(T,id,scn);else wait.push([id,scn])}catch(e){console.warn('3D загвар',e)}};
+  REAL_FILES.forEach(([file,id])=>L.load(REAL_URL+file+'.glb',g=>{show(id,g.scene);
+      if(id==='skin')wait.splice(0).forEach(([i,sc])=>show(i,sc));done()},undefined,()=>done()));
+  function done(){left--;B3.loading=left?Math.round((1-left/REAL_FILES.length)*100):null;setLabel();paintBody()}}
 
-function useReal(T,got){const scene=B3.scene,drop=m=>{scene.remove(m);if(m.userData.pre)scene.remove(m.userData.pre)};
-  const root=new T.Group();root.position.y=REAL_LIFT;scene.add(root);
-  /* Skin: one mesh, tagged per vertex with its body region */
-  let skin;got.skin.traverse(o=>{if(o.isMesh&&!skin)skin=o});
-  root.add(got.skin);root.updateMatrixWorld(true);
-  const geo=skin.geometry.clone().applyMatrix4(skin.matrixWorld).applyMatrix4(new T.Matrix4().makeTranslation(0,-REAL_LIFT,0));
-  geo.computeVertexNormals();
+/* One draw call per part: bake each sub-mesh into the root's frame and concatenate positions and normals */
+function mergeMeshes(T,list){const pos=[],nor=[],idx=[];let base=0;const v=new T.Vector3(),nm=new T.Matrix3();
+  list.forEach(o=>{const g=o.geometry,P=g.attributes.position,N=g.attributes.normal;o.updateMatrixWorld(true);nm.getNormalMatrix(o.matrixWorld);
+    for(let i=0;i<P.count;i++){v.fromBufferAttribute(P,i).applyMatrix4(o.matrixWorld);pos.push(v.x,v.y-REAL_LIFT,v.z);
+      if(N){v.fromBufferAttribute(N,i).applyMatrix3(nm).normalize();nor.push(v.x,v.y,v.z)}}
+    if(g.index)for(let i=0;i<g.index.count;i++)idx.push(g.index.getX(i)+base);else for(let i=0;i<P.count;i++)idx.push(i+base);
+    base+=P.count});
+  const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));
+  if(nor.length===pos.length)g.setAttribute('normal',new T.Float32BufferAttribute(nor,3));else g.computeVertexNormals();
+  g.setIndex(base>65535?new T.Uint32BufferAttribute(idx,1):new T.Uint16BufferAttribute(idx,1));g.computeBoundingSphere();return g}
+
+function realRoot(T){if(!B3.root){B3.root=new T.Group();B3.root.position.y=REAL_LIFT;B3.scene.add(B3.root)}return B3.root}
+const dropMesh=m=>{B3.scene.remove(m);if(m.parent)m.parent.remove(m);if(m.userData.pre)B3.scene.remove(m.userData.pre)};
+
+function useSkin(T,scn){const root=realRoot(T),list=[];scn.position.y=REAL_LIFT;scn.updateMatrixWorld(true);scn.traverse(o=>{if(o.isMesh)list.push(o)});
+  const geo=mergeMeshes(T,list);geo.computeVertexNormals();
   const pos=geo.attributes.position,reg=new Float32Array(pos.count);
-  for(let i=0;i<pos.count;i++){const id=skinRegion(pos.getX(i),pos.getY(i)+REAL_LIFT,pos.getZ(i));reg[i]=SKINREG.indexOf(id)}
+  for(let i=0;i<pos.count;i++)reg[i]=SKINREG.indexOf(skinRegion(pos.getX(i),pos.getY(i)+REAL_LIFT,pos.getZ(i)));
   geo.setAttribute('aRegion',new T.BufferAttribute(reg,1));
-  root.remove(got.skin);
   const sm=new T.Mesh(geo,skinMaterial(T));sm.userData.skin=true;sm.renderOrder=2;root.add(sm);
-  const pre=new T.Mesh(geo,B3.hide);pre.renderOrder=1;root.add(pre);
-  for(const id in PART)if(PART[id].layer!=='o'){PART[id].meshes.forEach(drop);PART[id].meshes=[]}
-  B3.skin=sm;
-  /* Organs: replace the hand-built ones that have a scanned counterpart */
-  const add=(id,scn,split)=>{const ids=split?[id+'L',id+'R']:[id];ids.forEach(k=>{PART[k].meshes.forEach(drop);PART[k].meshes=[]});
-    const mats={};ids.forEach(k=>mats[k]=organMaterial(T));const list=[];scn.traverse(o=>{if(o.isMesh)list.push(o)});
-    root.add(scn);root.updateMatrixWorld(true);
-    list.forEach(o=>{let k=id;
-      if(split){const c=new T.Vector3();o.geometry.computeBoundingBox();o.geometry.boundingBox.getCenter(c).applyMatrix4(o.matrixWorld);k=id+(c.x>=0?'L':'R')}
-      o.material=mats[k];o.userData.id=k;o.renderOrder=0;PART[k].meshes.push(o)})};
-  REAL_FILES.forEach(([,id])=>{if(id!=='skin'&&got[id])add(id,got[id],id==='lung')});
+  const pre=new T.Mesh(geo,B3.hide);pre.renderOrder=1;root.add(pre);sm.userData.pre=pre;
+  for(const id in PART)if(PART[id].layer!=='o'){PART[id].meshes.forEach(dropMesh);PART[id].meshes=[]}
   for(const id in KEEP_SHIFT)PART[id].meshes.forEach(m=>m.position.add(new T.Vector3(...KEEP_SHIFT[id])));
-  B3.real=true;B3.organs=Object.values(PART).filter(p=>p.layer==='o').flatMap(p=>p.meshes);B3.shell=[sm];
+  B3.skin=sm;B3.real=true;B3.shell=[sm];
   const c=$('#bcredit');if(c)c.hidden=false}
+
+function useOrgan(T,id,scn){const root=realRoot(T),split=id==='lung',groups={},c=new T.Vector3();
+  scn.updateMatrixWorld(true);root.updateMatrixWorld(true);
+  scn.traverse(o=>{if(!o.isMesh)return;let k=id;
+    if(split){o.geometry.computeBoundingBox();o.geometry.boundingBox.getCenter(c).applyMatrix4(o.matrixWorld);k=id+(c.x>=0?'L':'R')}
+    (groups[k]=groups[k]||[]).push(o)});
+  /* matrixWorld of the loaded scene is relative to its own root; lift it into this scene's frame */
+  scn.position.y=REAL_LIFT;scn.updateMatrixWorld(true);
+  for(const k in groups){PART[k].meshes.forEach(dropMesh);
+    const m=new T.Mesh(mergeMeshes(T,groups[k]),organMaterial(T));m.userData.id=k;m.renderOrder=0;root.add(m);PART[k].meshes=[m]}
+  B3.organs=Object.values(PART).filter(p=>p.layer==='o').flatMap(p=>p.meshes)}
 
 /* Camera basis for the goal view, and world units per screen pixel at the orbit centre */
 function camAxes(){const g=B3.g,h=B3.r.domElement.clientHeight||384;
@@ -719,14 +730,30 @@ function panBy(dx,dy){const a=camAxes();shiftTarget(-dx*a.px,dy*a.px)}
 /* Zoom keeps the point under the fingers (or cursor) in place */
 function zoomAt(f,cx,cy){const g=B3.g,b=B3.r.domElement.getBoundingClientRect(),a=camAxes(),nd=Math.max(.7,Math.min(5.5,g.d*f)),k=1-nd/g.d;
   shiftTarget((cx-b.left-b.width/2)*a.px*k,-(cy-b.top-b.height/2)*a.px*k);g.d=nd}
-function zoomBy(f){if(!B3.ready)return;B3.g.d=Math.max(.7,Math.min(5.5,B3.g.d*f));drawBody()}
+function zoomBy(f){if(!B3.ready)return;B3.g.d=Math.max(.7,Math.min(5.5,B3.g.d*f));moving();drawBody()}
 
-function pickAt(e){const b=B3.r.domElement.getBoundingClientRect();
-  B3.ray.setFromCamera({x:(e.clientX-b.left)/b.width*2-1,y:-((e.clientY-b.top)/b.height)*2+1},B3.cam);
-  /* Organs win over the skin above them, except eyes, ears and nose, which have nothing behind them worth picking */
-  const sk=B3.ray.intersectObjects(B3.shell)[0],skin=sk&&sk.object.userData.skin?SKINREG[sk.object.geometry.attributes.aRegion.getX(sk.face.a)]:sk&&sk.object.userData.id;
-  if(skin&&/^(eye|ear|nose)/.test(skin))return skin;
-  const org=B3.ray.intersectObjects(B3.organs)[0];return org?org.object.userData.id:skin||null}
+/* GPU picking: draw the pixel under the pointer with an id colour per part (red) or skin region (green).
+   Organs are drawn alone first, so they win over the skin above them, except eyes, ears and nose. */
+const PIDS=Object.keys(PART);
+function pickMats(T){if(B3.pm)return B3.pm;const pm={rt:new T.WebGLRenderTarget(1,1),px:new Uint8Array(4),byId:{},
+  skin:new T.ShaderMaterial({side:T.DoubleSide,vertexShader:'attribute float aRegion;varying float vR;void main(){vR=aRegion;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
+    fragmentShader:'varying float vR;void main(){gl_FragColor=vec4(0.0,(floor(vR+.5)+1.0)/255.0,0.0,1.0);}'})};
+  PIDS.forEach((id,i)=>pm.byId[id]=new T.MeshBasicMaterial({color:new T.Color((i+1)/255,0,0),side:T.DoubleSide}));return B3.pm=pm}
+/* Region ids must not blend across a triangle, so picking uses an unshared-vertex copy with one region per triangle */
+function pickGeo(geo){if(geo.userData.pick)return geo.userData.pick;const g=geo.toNonIndexed(),r=g.attributes.aRegion;
+  for(let i=0;i<r.count;i+=3){const v=r.getX(i);r.setX(i+1,v);r.setX(i+2,v)}return geo.userData.pick=g}
+function pickPass(meshes,e){const T=THREE,pm=pickMats(T),r=B3.r,b=r.domElement.getBoundingClientRect(),saved=[],vis=[];
+  B3.scene.traverse(o=>{if(o.isMesh){vis.push([o,o.visible]);o.visible=false}});
+  meshes.forEach(m=>{saved.push([m,m.material,m.geometry]);m.visible=true;m.material=m.userData.skin?pm.skin:pm.byId[m.userData.id];
+    if(m.userData.skin)m.geometry=pickGeo(m.geometry)});
+  B3.cam.setViewOffset(b.width,b.height,e.clientX-b.left,e.clientY-b.top,1,1);
+  const cc=r.getClearColor(new T.Color()),ca=r.getClearAlpha();r.setClearColor(0,0);r.setRenderTarget(pm.rt);r.clear();r.render(B3.scene,B3.cam);
+  r.readRenderTargetPixels(pm.rt,0,0,1,1,pm.px);r.setRenderTarget(null);r.setClearColor(cc,ca);B3.cam.clearViewOffset();
+  saved.forEach(([m,mat,geo])=>{m.material=mat;m.geometry=geo});vis.forEach(([o,v])=>o.visible=v);
+  return pm.px[0]?PIDS[pm.px[0]-1]:pm.px[1]?SKINREG[pm.px[1]-1]:null}
+function pickAt(e){if(!B3.ready)return null;
+  const skin=pickPass(B3.shell,e);if(skin&&/^(eye|ear|nose)/.test(skin))return skin;
+  return pickPass(B3.organs,e)||skin}
 
 function paintBody(){if(!B3.ready)return;const f=S.form;
   for(const id in PART){const p=PART[id],organ=p.layer==='o',base=organ?XR.organ:XR.shell;
@@ -741,6 +768,10 @@ function paintBody(){if(!B3.ready)return;const f=S.form;
     SKINREG.forEach((id,i)=>{const a=PART[id].area;st[i]=f.parts.includes(id)?1:(f.areas.includes(a)&&!f.parts.some(x=>PART[x].area===a))?2:B3.hover===id?3:0})}
   drawBody()}
 
+/* While dragging, pinching or wheeling, draw at 1x pixel density; restore full density 200 ms after the last move */
+function moving(){if(!B3.ready)return;B3.moveAt=performance.now();if(B3.r.getPixelRatio()!==1){B3.r.setPixelRatio(1);fitCanvas()}
+  clearTimeout(B3.sharpT);B3.sharpT=setTimeout(()=>{B3.r.setPixelRatio(Math.min(window.devicePixelRatio||1,2));fitCanvas();drawBody()},200)}
+function fitCanvas(){const host=$('#body3d');if(host)B3.r.setSize(host.clientWidth||300,host.clientHeight||384,false)}
 function drawBody(){if(!B3.ready)return;cancelAnimationFrame(B3.raf);
   const step=()=>{const v=B3.v,g=B3.g;let far=false;
     for(const k in g){const d=g[k]-v[k];if(Math.abs(d)>.002){v[k]+=d*.22;far=true}else v[k]=g[k]}
